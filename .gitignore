@@ -1,0 +1,6 @@
+*.pyc
+work/*
+db.sqlite3
+*.tmp
+*.bak
+static

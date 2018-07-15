@@ -1,0 +1,27 @@
+{% extends 'task_common.html' %}
+
+{% block title %}MLV Task - Result{% endblock title %}
+{% block mode %}result{% endblock mode %}
+
+{% block widget %}
+{% include 'widgets.html' with id=id %}
+{% endblock widget %}
+
+{% block content %}
+Your task id is {{ id }}.
+
+<h3>Result</h3>
+<span></span>
+
+<div id="graph"></div>
+
+<script>
+//  /var/www/htdocs/MLV/dongwon_module/VIS/htdocs/js/main.js
+$(function() {
+  var graph={{ graph }};
+  var svg=d3.select('#graph');
+  createV4SelectableForceDirectedGraph(svg, graph, {'dragEnd': onSelect, 'drag': onSelect, 'clic    k': onSelect});
+});
+</script>
+
+{% endblock content %}

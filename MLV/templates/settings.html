@@ -1,0 +1,25 @@
+{% extends 'task_common.html' %}
+
+{% block title %}MLV Task - Settings{% endblock title %}
+{% block mode %}setting{% endblock mode %}
+
+{% block widget %}
+{% include 'widgets.html' with id=id %}
+{% endblock widget %}
+
+{% block content %}
+Your task id is {{ id }}.
+
+<h3>Set parameters.</h3>
+<span>Set parameter of Random-walk function.</span>
+
+<div class="upload_form">
+  <form action="." method="POST" enctype="application/x-www-form-urlencoded">
+    {% csrf_token %}
+    <input type="text" name="cutoff" value="0.2">
+    <input type="submit" class="btn btn-primary" value="Run">
+    </div>
+  </form>
+</div>
+
+{% endblock content %}

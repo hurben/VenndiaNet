@@ -1,0 +1,138 @@
+{% extends 'task_common.html' %}
+
+{% block title %}MLV Task - Select Condition{% endblock title %}
+{% block mode %}select{% endblock mode %}
+
+{% block widget %}
+{% include 'widgets.html' with id=id %}
+{% endblock widget %}
+
+{% block content %}
+Your task id is {{ id }}.
+
+<h3>Select condition set.</h3>
+<span>Select/exclude conditions to be analyzed.</span>
+
+<div id="venn"></div>
+<div id="sel_detail"></div>
+
+<style>
+.venntooltip {
+  font-size : 14px;
+  position: absolute;
+  text-align: center;
+  width: 128px;
+  height: 85px;
+  background: #333;
+  color: #fff;
+  padding: 2px;  
+  border: 0px;
+  border-radius: 8px;
+  opacity: 0;
+}
+.venn-circle { opacity: 0.6; }
+.selected {
+  opacity: 1.0;
+}
+.excluded {
+  background: rgba(255,180,180,1.0) !important;
+  opacity: 0.6;
+}
+</style>
+<script>
+// TODO:
+// show detailed selection status
+
+
+
+
+var sets={{ venn }};
+
+// TODO:
+// if set count > 3,
+// display sets as one-by-one aligment
+// if not,
+// display sets as venn diagram.
+
+var chart = venn.VennDiagram()
+  .width(500)
+  .height(400)
+var div = d3.select("#venn").datum(sets).call(chart);
+div.selectAll("text").style("fill", "white");
+div.selectAll(".venn-circle path")
+  .style("fill-opacity", .8)
+  .style("stroke-width", 1)
+  .style("stroke-opacity", 1)
+  .style("stroke", "fff");
+
+var tooltip = d3.select("#venn_one").append("div")
+.attr("class", "venntooltip");
+
+div.selectAll("g")
+.on("mouseover", function(d, i) {
+  // sort all the areas relative to the current item
+  venn.sortAreas(div, d);
+
+  // Display a tooltip with the current size
+  tooltip.transition().duration(40).style("opacity", 1);
+  tooltip.text(d.size + "% of Audience One saw " + d.label);
+
+  // highlight the current path
+  var selection = d3.select(this).transition("tooltip").duration(400);
+  selection.select("path")
+      .style("stroke-width", 3)
+      .style("fill-opacity", d.sets.length == 1 ? .8 : 0)
+      .style("stroke-opacity", 1);
+})
+
+.on("mousemove", function() {
+  tooltip.style("left", (d3.event.pageX) + "px")
+         .style("top", (d3.event.pageY - 28) + "px");
+})
+
+.on("mouseout", function(d, i) {
+  tooltip.transition().duration(2000).style("opacity", 0);
+  var selection = d3.select(this).transition("tooltip").duration(400);
+  selection.select("path")
+    .style("stroke-width", 3)
+    .style("fill-opacity", d.sets.length == 1 ? .8 : 0)
+    .style("stroke-opacity", 1);
+});
+
+.on("click", function(d, i) {
+  // highlight the current path
+  // (toggle)
+  var selection = d3.select(this).transition("tooltip").duration(400);
+  selection.select("path")
+      .style("stroke-width", 3)
+      .style("fill-opacity", d.sets.length == 1 ? .8 : 0)
+      .style("stroke-opacity", 1);
+  // toggle input form
+  // TODO
+});
+
+.on("contextmenu", function(d, i) {
+  d3.event.preventDefault();
+  // highlight the current path
+  // (toggle)
+  var selection = d3.select(this).transition("tooltip").duration(400);
+  selection.select("path")
+      .style("stroke-width", 3)
+      .style("fill-opacity", d.sets.length == 1 ? .8 : 0)
+      .style("stroke-opacity", 1);
+  // toggle input form
+  // TODO
+});
+</script>
+
+<div class="upload_form">
+  <form action="." method="POST" enctype="application/x-www-form-urlencoded">
+    {% csrf_token %}
+    <input type="hidden" name="selection" value="">
+    <input type="hidden" name="exclusive" value="">
+    <input type="submit" class="btn btn-primary" value="Save">
+    </div>
+  </form>
+</div>
+
+{% endblock content %}

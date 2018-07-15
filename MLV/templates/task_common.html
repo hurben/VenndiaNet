@@ -1,0 +1,39 @@
+{% load staticfiles %}
+
+<html>
+<head>
+  <title>{% block title %}MLV Task{% endblock title %}</title>
+
+  <!-- css -->
+  <link href="https://fonts.googleapis.com/css?family=Roboto+Condensed" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+  <link rel="stylesheet" href="{% static 'css/task.css' %}">
+  <script type="text/javascript" src="{% static 'js/jquery.min.js' %}"></script>
+</head>
+<body class="mode-{% block mode %}{% endblock mode %}">
+  <div class="container-fluid">
+    <div class="left">
+      <div class="widget">
+        {% block widget %}
+        {% endblock widget %}
+      </div>
+    </div>
+    <div class="right">
+      <div class="content">
+        {% block content %}
+        {% endblock content %}
+      </div>
+    </div>
+  </div>
+
+  <!-- scripts -->
+  <script type="text/javascript" src="{% static 'js/bootstrap.min.js' %}"></script>
+  <script type="text/javascript" src="{% static 'js/d3.min.js' %}"></script>
+  <script type="text/javascript" src="{% static 'js/venn.js' %}"></script>
+  <script type="text/javascript" src="{% static 'js/d3.brush.lite.js' %}"></script>
+  <script type="text/javascript" src="{% static 'js/d3.forced.directed.graph.js' %}"></script>
+  <script type="text/javascript" src="{% static 'js/d3.multichord.js' %}"></script>
+  <script type="text/javascript" src="{% static 'js/task.js' %}"></script>
+</body>
+</html>

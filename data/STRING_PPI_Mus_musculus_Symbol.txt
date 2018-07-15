@@ -1,0 +1,1 @@
+/var/www/htdocs/MLV/src/ppi/STRING_PPI_Mus_musculus_Symbol.txt
