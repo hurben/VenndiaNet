@@ -13,16 +13,18 @@ Your task id is {{ id }}.
 <h3>Select condition set.</h3>
 <span>Select/exclude conditions to be analyzed.</span>
 
-<div id="venn"></div>
-<div id="sel_detail"></div>
+<div class="row-select">
+  <div class="left" id="venn"></div>
+  <div class="right" id="combination"></div>
+</div>
 
 <style>
 .venntooltip {
-  font-size : 14px;
+  font-size : 10pt;
   position: absolute;
   text-align: center;
-  width: 128px;
-  height: 85px;
+  width: 250px;
+  min-height: 60px;
   background: #333;
   color: #fff;
   padding: 2px;  
@@ -30,6 +32,11 @@ Your task id is {{ id }}.
   border-radius: 8px;
   opacity: 0;
 }
+.label {
+  font-size: 9pt;
+  font-weight: 700;
+}
+.venn-intersection .label { display: none; }
 .venn-circle { opacity: 0.6; }
 .selected {
   opacity: 1.0;
@@ -38,34 +45,159 @@ Your task id is {{ id }}.
   background: rgba(255,180,180,1.0) !important;
   opacity: 0.6;
 }
+.table_comb {
+}
+.table_comb .t0 {
+  background:rgba(0,0,0,0.05);
+}
+.table_comb .t1 {
+  background:transparent;
+}
 </style>
+
+
 <script>
-// TODO:
-// show detailed selection status
+// --------
+// combination map
+$(function() {
+var clr = d3.scaleOrdinal(d3.schemeCategory10);
+var combs={{ combination | safe }};
+var cols = combs.cols;
+var rows = combs.rows;
+for (i=0; i<rows.length; i++)
+{
+  rows[i].selected = false;
+}
+
+var table = d3.select("#combination")
+  .append("table").attr('class','table_comb');
+var thead = table.append('thead')
+  .selectAll('th')
+  .data(cols).enter()
+  .append('th')
+  .style('height', '150px')
+  .style('white-space', 'nowrap')
+  //.attr('class',function(d,i){ return 't'+(i%2); })
+  .append('div')
+  .style('transform', 'translate(-62px, -36px) rotate(60deg)')
+  .style('width', '30px')
+  .append('span')
+  .style('padding', '5px 10px')
+  .style('border-bottom', '1px solid #ccc')
+  .style('white-space', 'nowrap')
+  .style('text-overflow', 'ellipsis')
+  .style('width', '140px')
+  .style('display', 'block')
+  .style('overflow', 'hidden')
+  .style('font-size', '9pt')
+  .text(function(d,i) { return d; });
+var tbody = table.append('tbody')
+  .selectAll("tr")
+  .data(rows).enter().append("tr")
+  .style('cursor','pointer')
+  .on('click', function(d,i) {
+    //console.log(d);
+    d.selected = !d.selected;
+    if (d.selected)
+    {
+      d3.select(this).style('background','#fcc');
+    } else {
+      d3.select(this).style('background','transparent');
+    }
+    window.update_form_data();
+  })
+  .on('mouseover', function(d,i) {
+    d3.select(this).style('background','#f0f0f0');
+  })
+  .on('mouseout', function(d,i) {
+    d3.select(this).style('background',d.selected?'#fcc':'transparent');
+  })
+  .selectAll("td")
+  .data(function(row, i) {
+    tds = cols.map(function (c) {
+      return {'display':row.name.indexOf(c) >= 0?'block':'none', 'name':c, 'color':clr(c), 'width':'20px','text':''};
+    });
+    tds.push({'display':'block', 'color':'transparent', 'text':row.size, 'width':'80px'});
+    return tds;
+  }).enter().append("td")
+  .style("padding", "5px")
+  .attr('class',function(d,i){ return 't'+(i%2); })
+  .append("div")
+  .style("background", function(d,i) { return d.color; })
+  .style("width", function(d,i) { return d.width; })
+  .style("height", "20px")
+  .style("background", function(d,i) { return d.color; })
+  .style("display", function(d,i) { return d.display; })
+  .style("font-size", '10pt')
+  .text(function(d,i) { return d.text; });
+
+// global methods
+window.select_combination = function(selection, exclusion)
+{
+  table.select("tbody").selectAll("tr").each(function (d,i) {
+    var target = d.name.split('__');
+    // check target is subset
+    var is_subset = selection.some(val => target.includes(val));
+    // check any exclusion set is included
+    var is_exc = exclusion.some(val => target.includes(val));
+    if (is_subset && !is_exc)
+    {
+      d.selected = true;
+      d3.select(this).style('background','#fcc');
+    }
+    else
+    {
+      d.selected = false;
+      d3.select(this).style('background','transparent');
+    }
+  });
+}
+window.update_form_data = function()
+{
+  var sel = [];
+  table.select("tbody").selectAll("tr").each(function (d,i) {
+    if (d.selected)
+    {
+      sel.push(d.name);
+    }
+  });
+  $("#selection").val( sel.join(",") );
+}
+});
 
 
 
-
-var sets={{ venn }};
-
+// --------
 // TODO:
 // if set count > 3,
 // display sets as one-by-one aligment
 // if not,
 // display sets as venn diagram.
 
+$(function() {
+var clr = d3.scaleOrdinal(d3.schemeCategory10);
+var sets={{ venn | safe }};
+for (i=0; i<sets.length; i++)
+{
+  sets[i].selected = false;
+  sets[i].excluded = false;
+  sets[i].color = clr(sets[i].label);
+}
+
 var chart = venn.VennDiagram()
-  .width(500)
-  .height(400)
+  .width(600)
+  .height(500);
 var div = d3.select("#venn").datum(sets).call(chart);
 div.selectAll("text").style("fill", "white");
 div.selectAll(".venn-circle path")
   .style("fill-opacity", .8)
   .style("stroke-width", 1)
   .style("stroke-opacity", 1)
-  .style("stroke", "fff");
+  .style("stroke", "fff")
+  //.style("fill", function(d,i){ return d.color; });
+  .style("fill", function(d,i){ return clr(d.label); });
 
-var tooltip = d3.select("#venn_one").append("div")
+var tooltip = d3.select("#venn").append("div")
 .attr("class", "venntooltip");
 
 div.selectAll("g")
@@ -75,7 +207,7 @@ div.selectAll("g")
 
   // Display a tooltip with the current size
   tooltip.transition().duration(40).style("opacity", 1);
-  tooltip.text(d.size + "% of Audience One saw " + d.label);
+  tooltip.text(d.size + " genes are in: " + d.label);
 
   // highlight the current path
   var selection = d3.select(this).transition("tooltip").duration(400);
@@ -86,7 +218,7 @@ div.selectAll("g")
 })
 
 .on("mousemove", function() {
-  tooltip.style("left", (d3.event.pageX) + "px")
+  tooltip.style("left", (d3.event.pageX + 10) + "px")
          .style("top", (d3.event.pageY - 28) + "px");
 })
 
@@ -96,40 +228,77 @@ div.selectAll("g")
   selection.select("path")
     .style("stroke-width", 3)
     .style("fill-opacity", d.sets.length == 1 ? .8 : 0)
-    .style("stroke-opacity", 1);
-});
+    .style("stroke-opacity", 0);
+})
 
 .on("click", function(d, i) {
+  // toggle input form
+  d.selected = !d.selected;
+  d.excluded = false;
+  update_combination_from_venn();
   // highlight the current path
-  // (toggle)
   var selection = d3.select(this).transition("tooltip").duration(400);
   selection.select("path")
-      .style("stroke-width", 3)
-      .style("fill-opacity", d.sets.length == 1 ? .8 : 0)
-      .style("stroke-opacity", 1);
-  // toggle input form
-  // TODO
-});
+      //.style("fill", d.selected?"#f99":d.color );
+      .style("fill", d.selected?"#f99":clr(d.label) );
+})
 
 .on("contextmenu", function(d, i) {
   d3.event.preventDefault();
+  // toggle input form
+  d.selected = false;
+  d.excluded = !d.excluded;
+  update_combination_from_venn();
   // highlight the current path
-  // (toggle)
   var selection = d3.select(this).transition("tooltip").duration(400);
   selection.select("path")
-      .style("stroke-width", 3)
-      .style("fill-opacity", d.sets.length == 1 ? .8 : 0)
-      .style("stroke-opacity", 1);
-  // toggle input form
-  // TODO
+      //.style("fill", d.excluded?"#999":d.color );
+      .style("fill", d.excluded?"#999":clr(d.label) );
+});
+
+// depreciated
+function update_form_data_direct()
+{
+  var sel = [];
+  var exc = [];
+  div.selectAll("g").each(function (d,i) {
+    if (d.selected)
+    {
+      sel.push(d.label);
+    }
+    else if (d.excluded)
+    {
+      exc.push(d.label);
+    }
+  });
+  $("#form_sel").val( sel.join(",") );
+  $("#form_exc").val( exc.join(",") );
+}
+function update_combination_from_venn()
+{
+  var sel = [];
+  var exc = [];
+  div.selectAll("g").each(function (d,i) {
+    if (d.selected)
+    {
+      sel.push(d.label);
+    }
+    else if (d.excluded)
+    {
+      exc.push(d.label);
+    }
+  });
+  window.select_combination(sel,exc);
+  window.update_form_data();
+}
+
 });
 </script>
 
 <div class="upload_form">
   <form action="." method="POST" enctype="application/x-www-form-urlencoded">
     {% csrf_token %}
-    <input type="hidden" name="selection" value="">
-    <input type="hidden" name="exclusive" value="">
+    <input type="text" name="selection" id="selection" value="">
     <input type="submit" class="btn btn-primary" value="Save">
     </div>
   </form>

@@ -102,8 +102,15 @@ def generate_sel(path, sel_set, sub_set):
   # write new selected gene files
   # (filter out previous pvalue.txt)
   df = pd.read_csv('work/%s/pvalue.txt'%s['id'], index_col=0)
-  print df
-  df_sel = df[list(genes)]
+  df_sel = df.loc[list(genes)]
+  df_sel.to_csv('work/%s/pvalue_sel.txt'%s['id'],sep='\t')
+
+def select_venn_group(path, selection):
+  # liver.HFD.deg.sig.gene.matrix,liver.HFD.deg.sig.gene.matrix__muscle.HFD.deg.sig.gene.matrix,muscle.HFD.deg.sig.gene.matrix
+  s = load_state(path)
+  sel_list = selection.split(',')
+  df = pd.read_csv('work/%s/pvalue.txt'%s['id'], index_col=0)
+  df_sel = df[df['cond'].isin(sel_list)]
   df_sel.to_csv('work/%s/pvalue_sel.txt'%s['id'],sep='\t')
 
 
@@ -209,6 +216,7 @@ class FL_MLV_params(object):
     ppi_profile_file_readlines = ppi_profile_file.readlines()
     self.ppi_dict, self.ppi_gene_list = FL_MLV_Methods.StringDB_to_dict()
     self.unable_gene_list = CHECK_UNABLE_GENES(self.condition_dict, self.ppi_gene_list)
+    print self.ppi_gene_list
 
 # input: directory (sel info; sel.txt)
 # output: generated graph file (RWR; random walk probability)
@@ -216,7 +224,7 @@ def generate_graph(path):
   s = load_state(path)
   df = pd.read_csv('work/%s/pvalue_sel.txt'%s['id'],sep='\t',index_col=0)
   # process random walk and fill pvalue
-  FL_MLV_params = FL_MLV_params(s['id'], df)
+  params = FL_MLV_params(s['id'], df)
   do_adj_mat_RWR(params)
   fill_params(params)
   # save graph and df_node
@@ -226,7 +234,7 @@ def generate_graph(path):
 
 
 
-# read venn diagram, return as dict.
+# read venn diagram, return as list.
 def read_venn(id_):
   groups = {}
   with open('work/%s/group.txt'%id_,'r') as f:
@@ -243,6 +251,15 @@ def read_venn(id_):
       'size': len(gns)
     })
   return r
+# read combination map, return as {combinations, conditions}.
+def read_combination(id_):
+  groups = []
+  df = pd.read_csv('work/%s/pvalue.txt'%id_,index_col=0)
+  conds = set()
+  for name,group in df.groupby('cond'):
+    groups.append( {'name':name, 'size':group.shape[0]} )
+    conds.update( set(name.split('__')) )
+  return {'rows':groups, 'cols':list(conds)}
 
 
 ##
@@ -252,7 +269,8 @@ if (__name__=="__main__"):
   tasks = {
     'generate_venn' : generate_venn,
     'generate_sel':generate_sel,
-    'generate_graph': generate_graph
+    'generate_graph': generate_graph,
+    'select_venn_group': select_venn_group,
   }
 
   import argparse
@@ -264,6 +282,8 @@ if (__name__=="__main__"):
   parser.add_argument('--method', help='argument of RWR method')
   args = parser.parse_args()
   if (args.task == 'generate_sel'):
-    generate_sel(args.path, args.sel_set.split(','), args.sub_set.split(','))
+    tasks[ args.task ](args.path, args.sel_set.split(','), args.sub_set.split(','))
+  elif (args.task == 'select_venn_group'):
+    tasks[ args.task ](args.path, args.sel_set.split(','))
   else:
     tasks[ args.task ](args.path)

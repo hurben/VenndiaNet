@@ -70,7 +70,7 @@ def step_upload(request, id):
     s['cond_count'] = len(s['files'])
     save_state(s)
     # generate set info file to draw venn diagram
-    MLV.generate_venn('work/%s' % id)
+    MLV.generate_venn(id)
     return redirect('step_select', id=id)
 
   return render(request, 'upload.html', {'id': id, 'state': s})
@@ -85,7 +85,8 @@ def step_select(request, id):
 
   if (request.method == "POST"):
     # prepare to save selected genes
-    ddd
+    selection = request.POST['selection']
+    MLV.select_venn_group(id, selection)
     s['state'] = 'selected'
     save_state(s)
     return redirect('step_params', id=id)
@@ -93,7 +94,10 @@ def step_select(request, id):
   # draw venn diagram in case of count <= 4
   # else, draw in heatmap method (miRTarVis)
   venn = MLV.read_venn(id)
-  return render(request, 'select.html', {'id': id, 'state': s, 'venn': venn})
+  comb = MLV.read_combination(id)
+  return render(request, 'select.html', {
+    'id': id, 'state': s, 'venn': venn, 'combination': comb
+    })
 
 def step_params(request, id):
   if (not validate(id)):
