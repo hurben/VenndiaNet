@@ -17,10 +17,11 @@ Your task id is {{ id }}.
 
 <script>
 //  /var/www/htdocs/MLV/dongwon_module/VIS/htdocs/js/main.js
+var graph = {{ graph | safe }};
+
 $(function() {
-  var graph={{ graph }};
   var svg=d3.select('#graph');
-  createV4SelectableForceDirectedGraph(svg, graph, {'dragEnd': onSelect, 'drag': onSelect, 'clic    k': onSelect});
+  createV4SelectableForceDirectedGraph(svg, graph, {'dragEnd': onSelect, 'drag': onSelect, 'click': onSelect});
 });
 </script>
 

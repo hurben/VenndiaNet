@@ -59,12 +59,12 @@ def generate_venn(path):
     groupname = '__'.join(groups_set)
     if (groupname not in groups):
       groups[groupname] = []
-    groups[groupname].append(str(row['TS_ID']))
+    groups[groupname].append(str(row['GENESYMBOL']))
     # groups_in dict
     for gns in powerset(groups_set):
       if (len(gns) == 0):
         continue
-      nm = str(row['TS_ID'])
+      nm = str(row['GENESYMBOL'])
       groups_in['__'.join(sorted(gns))].append(nm)
   # save group information (gene - group dataframe)
   gene_cond_data = []
@@ -108,7 +108,7 @@ def generate_sel(path, sel_set, sub_set):
 def select_venn_group(path, selection):
   # liver.HFD.deg.sig.gene.matrix,liver.HFD.deg.sig.gene.matrix__muscle.HFD.deg.sig.gene.matrix,muscle.HFD.deg.sig.gene.matrix
   s = load_state(path)
-  sel_list = selection.split(',')
+  sel_list = selection
   df = pd.read_csv('work/%s/pvalue.txt'%s['id'], index_col=0)
   df_sel = df[df['cond'].isin(sel_list)]
   df_sel.to_csv('work/%s/pvalue_sel.txt'%s['id'],sep='\t')
@@ -170,19 +170,30 @@ def fill_params(params):
   # ---
   # reload data, and fill dataframe.
   # (tabbed splitted file, index exists.)
-  for cond in condition_list.keys():
-    df = pd.read_csv("work/%s/.BH.%s.rwr"%(params.name,cond), index_col=0, sep='\t')
+  for cond in params.condition_dict.keys():
+    if ('__' in cond):
+      continue  # no result with intersection set
+    df = pd.read_csv("work/%s/.BH.%s.rwr"%(params.name,cond), index_col=0, delimiter=r"\s+")
+    df.columns = ['pvalue']
+    params.df.at[df.index,'pvalue'] = df['pvalue']
+    """
+    print df
     for gn,row in df.iterrows():
-      params.df[gn]['pvalue'] = row.iloc[0]
+      print gn
+      print params.df.loc[gn]
+      params.df.loc[gn]['pvalue'] = row.iloc[0]
+    """
   # ---
   # extract graph data from adjacency matrix.
   params.edges = {}
-  for cond in condition_list.keys():
+  for cond in params.condition_dict.keys():
+    if ('__' in cond):
+      continue
     with open("work/%s/.BH.%s.adj.matrix"%(params.name,cond),'r') as f:
       gns = f.readline().strip().split('\t')
       count_remove_mark = 1   # to remove edge duplication
       for l in f:
-        x = l.strip.split('\t')
+        x = l.strip().split('\t')
         gn, gmark = x[0], [_==1 for _ in x[1:]]
         for i in range(count_remove_mark):
           gmark[i] = False
@@ -216,7 +227,6 @@ class FL_MLV_params(object):
     ppi_profile_file_readlines = ppi_profile_file.readlines()
     self.ppi_dict, self.ppi_gene_list = FL_MLV_Methods.StringDB_to_dict()
     self.unable_gene_list = CHECK_UNABLE_GENES(self.condition_dict, self.ppi_gene_list)
-    print self.ppi_gene_list
 
 # input: directory (sel info; sel.txt)
 # output: generated graph file (RWR; random walk probability)
@@ -230,7 +240,7 @@ def generate_graph(path):
   # save graph and df_node
   df.to_csv('work/%s/pvalue_sel.txt'%s['id'],sep='\t')
   with open('work/%s/graph.json'%s['id'],'w') as f:
-    json.dump({'nodes':params.nodes,'edges':params.edges}, f)
+    json.dump({'nodes':params.genes,'edges':params.edges}, f)
 
 
 
@@ -260,6 +270,9 @@ def read_combination(id_):
     groups.append( {'name':name, 'size':group.shape[0]} )
     conds.update( set(name.split('__')) )
   return {'rows':groups, 'cols':list(conds)}
+def read_graph(id_):
+  with open('work/%s/graph.json','r') as f:
+    return json.load(f)
 
 
 ##
