@@ -125,4 +125,4 @@ def result(request, id):
 
   # if result is not yet,
   # do automatic refresh
-  return render(request, 'result.html', {'id': id, 'state': s, 'graph':MLV.read_graph(id)})
+  return render(request, 'result.html', {'id': id, 'state': s, 'graph':json.dumps(MLV.read_graph(id))})

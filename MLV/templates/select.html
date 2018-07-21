@@ -187,7 +187,9 @@ for (i=0; i<sets.length; i++)
 var chart = venn.VennDiagram()
   .width(600)
   .height(500);
-var div = d3.select("#venn").datum(sets).call(chart);
+//var div = d3.select("#venn").datum(sets).call(chart);
+var div = d3.select("#venn").datum(sets);
+var _chart = chart(div);  // includes radius and so on
 div.selectAll("text").style("fill", "white");
 div.selectAll(".venn-circle path")
   .style("fill-opacity", .8)

@@ -185,7 +185,7 @@ def fill_params(params):
     """
   # ---
   # extract graph data from adjacency matrix.
-  params.edges = {}
+  params.edges = []
   for cond in params.condition_dict.keys():
     if ('__' in cond):
       continue
@@ -194,7 +194,7 @@ def fill_params(params):
       count_remove_mark = 1   # to remove edge duplication
       for l in f:
         x = l.strip().split('\t')
-        gn, gmark = x[0], [_==1 for _ in x[1:]]
+        gn, gmark = x[0], [_=='1' for _ in x[1:]]
         for i in range(count_remove_mark):
           gmark[i] = False
         targets = compress(gns, gmark)
@@ -271,7 +271,7 @@ def read_combination(id_):
     conds.update( set(name.split('__')) )
   return {'rows':groups, 'cols':list(conds)}
 def read_graph(id_):
-  with open('work/%s/graph.json','r') as f:
+  with open('work/%s/graph.json'%id_,'r') as f:
     return json.load(f)
 
 

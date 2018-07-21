@@ -13,15 +13,95 @@ Your task id is {{ id }}.
 <h3>Result</h3>
 <span></span>
 
-<div id="graph"></div>
+<div id="venngraph"></div>
 
 <script>
 //  /var/www/htdocs/MLV/dongwon_module/VIS/htdocs/js/main.js
-var graph = {{ graph | safe }};
-
 $(function() {
-  var svg=d3.select('#graph');
-  createV4SelectableForceDirectedGraph(svg, graph, {'dragEnd': onSelect, 'drag': onSelect, 'click': onSelect});
+var graph = {{ graph | safe }};
+var nodes = graph.nodes;
+var edges = graph.edges;
+var div = d3.select("#venngraph");
+console.log('Total node count: ' + nodes.length);
+console.log('Total edge count: ' + edges.length);
+
+// 0. generate group count data for venn graph
+var groups = {};
+for (var i=0; i<nodes.length; i++)
+{
+  if (!(nodes[i].group in groups)) groups[nodes[i].group] = 0;
+}
+var kconds = []
+for (var k in groups) { kconds.push( k.split('__') ); }
+for (var i=0; i<nodes.length; i++)
+{
+  var cond = nodes[i].group;
+  for (var j=0; j<kconds.length; j++)
+  {
+    var condvalid = true;
+    for (var k=0; k<kconds[j].length; k++)
+    {
+      if (cond.indexOf(kconds[j][k])<0)
+      {
+        condvalid = false;
+        break;
+      }
+    }
+    if (condvalid) { groups[Object.keys(groups)[j]]++; }
+  }
+}
+var grouplist = [];
+for (var k in groups)
+{
+  grouplist.push( {'sets':k.split('__'), 'size':groups[k], 'figure':groups[k], 'label':k} );
+}
+
+// 1. generate venn graph
+console.log(grouplist);
+var venn_objs = div.datum(grouplist);
+var vennChart = venn.VennDiagram().width(600).height(500);
+var venn_data = vennChart(venn_objs);  // contains radius,x,y, ...
+
+// 2-1. create node neighbor object from edge object
+// (add: x, y, neighbors)
+var nodedict = {}
+for (var i=0; i<nodes.length; i++)
+{
+  nodes[i].neighbors = [];
+  nodedict[nodes[i].name] = nodes[i];
+  nodes[i].x = 0;
+  nodes[i].y = 0;
+}
+for (var i=0; i<edges.length; i++)
+{
+  nodedict[edges[i].source].neighbors.push( edges[i].target );
+  nodedict[edges[i].target].neighbors.push( edges[i].source );
+}
+
+// 2-2. pass venn param and graph to generate node graph
+var node_objs = div.datum(nodes);
+var nodeRenderer = VennNode().width(600).height(500);
+var node_data = nodeRenderer(node_objs, venn_data.circles);   // passes node (includes neighbor), venn set info
+
+// 3. render edge information
+var edge_objs = div.datum(edges);
+var edgeRenderer = VennEdge(nodeRenderer);
+var edge_data = edgeRenderer(edge_objs, node_objs);
+
+// 4. make styles, if necessary.
+div.selectAll('.venn-node')
+  .style('stroke-width', 1)
+  .style('stroke-opacity', 1)
+  .style('stroke', '#333')
+  .style('z-index', 100);
+div.selectAll('.venn-edge')
+  .style('stroke-width', 2)
+  .style('stroke-opacity', 1)
+  .style('stroke', '#999');
+
+// 5. tooltip handler (on node/venn)
+// TODO
+
 });
 </script>
 
