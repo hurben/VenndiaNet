@@ -22,6 +22,7 @@ var graph = {{ graph | safe }};
 var nodes = graph.nodes;
 var edges = graph.edges;
 var div = d3.select("#venngraph");
+var clr = d3.scaleOrdinal(d3.schemeCategory10);
 console.log('Total node count: ' + nodes.length);
 console.log('Total edge count: ' + edges.length);
 
@@ -29,6 +30,7 @@ console.log('Total edge count: ' + edges.length);
 var groups = {};
 for (var i=0; i<nodes.length; i++)
 {
+  nodes[i].idx = i;   // additional information for vennGraph
   if (!(nodes[i].group in groups)) groups[nodes[i].group] = 0;
 }
 var kconds = []
@@ -57,12 +59,11 @@ for (var k in groups)
 }
 
 // 1. generate venn graph
-console.log(grouplist);
 var venn_objs = div.datum(grouplist);
 var vennChart = venn.VennDiagram().width(600).height(500);
 var venn_data = vennChart(venn_objs);  // contains radius,x,y, ...
 
-// 2-1. create node neighbor object from edge object
+// 2. create node neighbor object from edge object
 // (add: x, y, neighbors)
 var nodedict = {}
 for (var i=0; i<nodes.length; i++)
@@ -78,15 +79,11 @@ for (var i=0; i<edges.length; i++)
   nodedict[edges[i].target].neighbors.push( edges[i].source );
 }
 
-// 2-2. pass venn param and graph to generate node graph
-var node_objs = div.datum(nodes);
-var nodeRenderer = VennNode().width(600).height(500);
-var node_data = nodeRenderer(node_objs, venn_data.circles);   // passes node (includes neighbor), venn set info
-
-// 3. render edge information
-var edge_objs = div.datum(edges);
-var edgeRenderer = VennEdge(nodeRenderer);
-var edge_data = edgeRenderer(edge_objs, node_objs);
+// 3. pass venn param and graph to generate node graph
+var vg = vennGraph(div, clr).width(600).height(500)
+  .setNodes(nodes).setEdges(edges).setCircle(venn_data.circles);
+var node_data = vg.vennNode(div.datum(nodes));   // passes node (includes neighbor), venn set info
+var edge_data = vg.vennEdge(div.datum(edges));
 
 // 4. make styles, if necessary.
 div.selectAll('.venn-node')
