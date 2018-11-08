@@ -164,8 +164,10 @@ def result(request, id):
 		return render(request, 'invalid.html', {'id': id, 'state': s})
 
 	MLV.Run_RWR(id)
-	cutoff, sorting_order = MLV.After_RWR(id)
-	gene_rank_dict = MLV.Create_Result_Summary(id, cutoff, sorting_order)
+	cutoff, sorting_order, cutoff_gene_list = MLV.After_RWR(id)
+	gene_rank_dict, gene_condition_dict, condition_id_dict = MLV.Create_Result_Summary(id, cutoff, sorting_order)
+	gene_color_dict = MLV.Create_Gene_Color_dict(cutoff_gene_list, gene_condition_dict, condition_id_dict)
+
 	rank_gene_dict = MLV.Create_Rank_Gene_dict(gene_rank_dict)
 
 	manage_result_file_cmd ='cp work/%s/%s.result.summary //var/www/html/MLV_PUBLIC/upload/%s'% (work_id, work_id, work_id)
@@ -173,4 +175,4 @@ def result(request, id):
 
 	# if result is not yet,
 	# do automatic refresh
-	return render(request, 'result.html', {'id': id, 'state': s, 'graph':json.dumps(MLV.read_graph(id)), 'gene_rank' : gene_rank_dict, 'rank_gene' : rank_gene_dict})
+	return render(request, 'result.html', {'id': id, 'state': s, 'graph':json.dumps(MLV.read_graph(id)), 'gene_rank' : gene_rank_dict, 'rank_gene' : rank_gene_dict, 'gene_color' : gene_color_dict})

@@ -10,6 +10,32 @@
 {% block content %}
 <strong>Task ID :</strong> {{ id }}<br>
 
+<style>
+	body { background: #fff; }
+	.bluetop {
+	  border-collapse: collapse;
+	  border-top: 3px solid #168;
+	}  
+	.bluetop th {
+	  color: #168;
+	  background: #f0f6f9;
+	}
+	.bluetop th, .bluetop td {
+	  padding: 10px;
+	  border: 1px solid #ddd;
+	}
+	.bluetop th:first-child, .bluetop td:first-child {
+	  border-left: 0;
+	}
+	.bluetop th:last-child, .bluetop td:last-child {
+	  border-right: 0;
+	}
+	.bluetop td:first-child {
+	  color: #168;
+	  background: #f0f6f9;
+	}
+</style>
+
 
 <h3>Result</h3>
 <div id="result_download_link" style="display: none;">
@@ -18,7 +44,7 @@
 
 <span></span>
 
-<div id="venngraph" style="position: relative; border: 2px solid rgb(76,76,76); height:70%"></div>
+<div id="venngraph" style="position: relative; border: 3px solid #168; height:80%; width:80%; display: none;"></div>
 <div id="ranked_gene_list"></div>
 
 <div id="loading">PLEASE WAIT ...</div>
@@ -117,7 +143,6 @@ var node_data = vg.vennNode(div.datum(nodes));
 //If I want more color modification, I should twick this function. 
 //venngraph.js
 
-
 // 4. zoom / resize handler
 // zoom refer to: http://bl.ocks.org/TWiStErRob/b1c62730e01fe33baa2dea0d0aa29359
 var zx=0, zy=0;
@@ -214,6 +239,29 @@ function node_mouseout(d,i)
   tooltip.transition().duration(2000).style("opacity", 0);
 }
 
+function node_color_pick(gene_node)
+{
+	console.log(gene_node);
+	var node_color = '';
+	var circle_list = div.select('.venn-nodes').selectAll('circle')
+	circle_list.filter(function (d){
+	if ( d.name == gene_node )
+		{
+			var selection_results = d3.select(this).attr('style');
+			console.log(selection_results);
+			node_color = node_color + selection_results;
+		}
+	else
+	{
+		console.log('DO NOT EXIST');
+	}
+	});
+
+	var node_color = node_color.replace('fill:','');
+
+	return node_color
+}
+
 function node_click(d,i)
 {
 	$("#title").text(d.name);
@@ -228,8 +276,10 @@ function node_click(d,i)
 
 	if (names.length == 1) 
 	{	
+	var edge_node_color = node_color_pick(names[i]);
 	var html = html + '</b><br>Neighbors : Rank<br><ul><li>';
-	var html = html + names[i] + '<b> : ' + gene_rank[names[i]] + '</b></li></ul>';
+	//var html = html + '<font color="' + gene_color[names[i]] + '">' + names[i] + ': ' + gene_rank[names[i]] + '</font></li></ul>';
+	var html = html + '<font style="color:' + edge_node_color + '">' + names[i] + ': ' + gene_rank[names[i]] + '</font></li></ul>';
 	}
 
 	if (names.length >= 2)
@@ -237,7 +287,11 @@ function node_click(d,i)
 		var html = html + '</b><br>Neighbors : Rank<br><ul>';
 		for ( i= 0; i < names.length; i++)
 		{
-			var html = html + '<li>' + names[i]  + '<b> : '+ gene_rank[names[i]] +'</b></li>';
+			var edge_node_color = node_color_pick(names[i]);
+			console.log(edge_node_color);
+
+			//var html = html + '<li><font color="' + gene_color[names[i]] + '">' + names[i]  + '</font>: ' + gene_rank[names[i]] +'</li>';
+			var html = html + '<li><font style="color:' + edge_node_color + '">' + names[i]  + '</font>: ' + gene_rank[names[i]] +'</li>';
 		}
 	var html = html + '</ul>';
 	}
@@ -275,8 +329,8 @@ var drag = d3.drag()
 
 function create_ranked_gene_list()
 {
-	var html = '<table style>';
-	for ( i=0; i < 5; i++)
+	var html = '<table class="bluetop">';
+	for ( i=0; i < 3; i++)
 	{		
 		if (i == 0)
 		{	
@@ -287,7 +341,7 @@ function create_ranked_gene_list()
 			var table_head = (i + 1) * 10;
 		}
 		
-		var html = html + '<th>Top ' + table_head  +  '</th><tr>';
+		var html = html + '<tr><td>Top ' + table_head + '</td>';
 
 		for (j=0; j<10; j++)
 		{
@@ -302,6 +356,7 @@ function create_ranked_gene_list()
 
 	$('#ranked_gene_list').html(html);
 }
+
 create_ranked_gene_list();
 
 $(document).on('click', '#ranked_gene_list', function(event)
@@ -313,8 +368,18 @@ $(document).on('click', '#ranked_gene_list', function(event)
 		if ( d.name == gene_node )
 		{
 			//this : <circle r="2px" cx="289.70425992453056" cy="286.77604126827646" style="fill: rgb(31, 119, 180);"></circle>
+
 			d3.select(this).style('fill', 'rgb(140,0,0)')
 			d3.select(this).attr('r', 5)
+		}
+	});
+
+	var circle_list = div.select('.venn-nodes').selectAll('circle')
+	circle_list.filter(function (d){
+	if ( d.name == gene_node )
+		{
+			var node_color = d3.select(this).attr('style')
+			console.log(node_color)
 		}
 	});
 
@@ -324,6 +389,7 @@ $(document).on('click', '#ranked_gene_list', function(event)
 // 6. hide loading message
 $('#loading').hide();
 $('#result_download_link').show();
+$('#venngraph').show();
 $('#panel_close').on('click', function() { $('#panel').hide(); });
 
 });

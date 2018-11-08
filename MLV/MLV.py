@@ -219,15 +219,16 @@ def After_RWR(path):
 	parameter_info_dir = 'work/%s/parameter.txt'% work_id
 
 	cutoff, sorting_order = FL_MLV_Methods.Parameter_Handling().Get_Parameter(parameter_info_dir)
+	cutoff_gene_list = []
 
 	if cutoff == 'None':
 		FL_MLV_Methods.Graph_Methods().Create_Graph_Info_DEFAULT(s['id'])
 
 	if cutoff != 'None':
 		cutoff_gene_list = FL_MLV_Methods.Parameter_Handling().Cutoff_RWR(rwr_dir, cutoff, sorting_order)
-		FL_MLV_Methods.Graph_Methods().Create_Graph_Info_CUTOFF_V2(s['id'], cutoff_gene_list)
+		FL_MLV_Methods.Graph_Methods().Create_Graph_Info_CUTOFF(s['id'], cutoff_gene_list)
 
-	return cutoff, sorting_order
+	return cutoff, sorting_order, cutoff_gene_list
 
 
 #//var/www/htdocs/MLV/analysis/ppi/protocol/summerize_global_usage.py
@@ -252,6 +253,7 @@ def Create_Result_Summary(path, cutoff, sort_order):
 
 	if cutoff != 'None':
 		result_length = len(rwr_dict.keys())
+		cutoff = float(cutoff)
 		cutoff = int(result_length * cutoff)
 
 
@@ -275,7 +277,7 @@ def Create_Result_Summary(path, cutoff, sort_order):
 
 	output_txt.close()
 
-	return gene_rank_dict
+	return gene_rank_dict, gene_condition_dict, condition_id_dict
 
 def Create_Rank_Gene_dict(gene_rank_dict):
 
@@ -286,6 +288,30 @@ def Create_Rank_Gene_dict(gene_rank_dict):
 		rank_gene_dict[rank] = gene
 
 	return rank_gene_dict
+
+def Create_Gene_Color_dict(cutoff_gene_list, gene_condition_dict, condition_id_dict):
+	#Would be better if i used dataframe..
+	colorset_list = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
+	gene_color_dict = {}
+
+	for gene in gene_condition_dict.keys():
+		condition_id = gene_condition_dict[gene]
+		condition = condition_id_dict[condition_id]
+
+		if gene in cutoff_gene_list:
+
+			if '__' not in condition:
+				color_id = int(condition_id) - 1
+				color_code = colorset_list[color_id]
+			if '__' in condition:
+				color_code = '#262626'
+		else:
+			color_code = '#e5e5e5'
+
+		gene_color_dict[gene] = color_code
+		
+
+	return gene_color_dict	
 
 
 

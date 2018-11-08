@@ -290,45 +290,6 @@ class Graph_Methods():
 		graph_json_open.close()
 
 	def Create_Graph_Info_CUTOFF(self, work_id, cutoff_gene_list):
-		print cutoff_gene_list
-
-		mlv_file = 'work/%s/%s.mlv'% (work_id, work_id)
-		graph_json_file = 'work/%s/graph.json'% (work_id)
-		graph_json_open = open(graph_json_file,'w')
-
-		json_string = ''
-
-		condition_dict, gene_list = MLV_Profile_to_dict(mlv_file)
-		rep_condition_dict = {}
-
-		#refinement
-		for condition in condition_dict.keys():
-			condition_gene_list = condition_dict[condition]
-			rep_condition_gene_list = condition_gene_list[:]
-
-			for gene in condition_gene_list:
-				if gene not in cutoff_gene_list:
-					rep_condition_gene_list.remove(gene)
-
-			rep_condition_dict[condition] = rep_condition_gene_list
-
-
-		StringDB_dict, SortGene_list = StringDB_to_dict()
-
-		condition_dict = rep_condition_dict
-		print rep_condition_dict
-
-		json_string = Graph_Methods().Create_Json_Template(json_string, 1)
-		json_string = Graph_Methods().Create_Node_Json(condition_dict, json_string)
-		json_string = Graph_Methods().Create_Json_Template(json_string, 2)
-		json_string = Graph_Methods().Create_Edge_Json(gene_list, StringDB_dict, json_string)
-		json_string = Graph_Methods().Create_Json_Template(json_string, 3)
-
-		graph_json_open.write(json_string)
-		graph_json_open.close()
-
-	def Create_Graph_Info_CUTOFF_V2(self, work_id, cutoff_gene_list):
-		print cutoff_gene_list
 
 		mlv_file = 'work/%s/%s.mlv'% (work_id, work_id)
 		graph_json_file = 'work/%s/graph.json'% (work_id)
