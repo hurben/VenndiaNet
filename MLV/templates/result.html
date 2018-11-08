@@ -8,7 +8,6 @@
 {% endblock widget %}
 
 {% block content %}
-<strong>Task ID :</strong> {{ id }}<br>
 
 <style>
 	body { background: #fff; }
@@ -43,7 +42,7 @@
 </div>
 
 <span></span>
-
+<div id="venngraph_legend" style="display: none;"></div>
 <div id="venngraph" style="position: relative; border: 3px solid #168; height:80%; width:80%; display: none;"></div>
 <div id="ranked_gene_list"></div>
 
@@ -241,25 +240,22 @@ function node_mouseout(d,i)
 
 function node_color_pick(gene_node)
 {
-	console.log(gene_node);
 	var node_color = '';
 	var circle_list = div.select('.venn-nodes').selectAll('circle')
+
 	circle_list.filter(function (d){
-	if ( d.name == gene_node )
-		{
-			var selection_results = d3.select(this).attr('style');
-			console.log(selection_results);
-			node_color = node_color + selection_results;
+	if ( d.name == gene_node ){
+		var selection_results = d3.select(this).attr('style');
+		node_color = node_color + selection_results;
 		}
-	else
-	{
-		console.log('DO NOT EXIST');
-	}
 	});
 
 	var node_color = node_color.replace('fill:','');
+	if (node_color == 'null'){
+		var node_color = 'rgb(31,31,31);';
+	}
 
-	return node_color
+	return node_color;
 }
 
 function node_click(d,i)
@@ -278,7 +274,6 @@ function node_click(d,i)
 	{	
 	var edge_node_color = node_color_pick(names[i]);
 	var html = html + '</b><br>Neighbors : Rank<br><ul><li>';
-	//var html = html + '<font color="' + gene_color[names[i]] + '">' + names[i] + ': ' + gene_rank[names[i]] + '</font></li></ul>';
 	var html = html + '<font style="color:' + edge_node_color + '">' + names[i] + ': ' + gene_rank[names[i]] + '</font></li></ul>';
 	}
 
@@ -288,9 +283,6 @@ function node_click(d,i)
 		for ( i= 0; i < names.length; i++)
 		{
 			var edge_node_color = node_color_pick(names[i]);
-			console.log(edge_node_color);
-
-			//var html = html + '<li><font color="' + gene_color[names[i]] + '">' + names[i]  + '</font>: ' + gene_rank[names[i]] +'</li>';
 			var html = html + '<li><font style="color:' + edge_node_color + '">' + names[i]  + '</font>: ' + gene_rank[names[i]] +'</li>';
 		}
 	var html = html + '</ul>';
@@ -327,24 +319,19 @@ var drag = d3.drag()
   .on("end", dragended);
 
 
-function create_ranked_gene_list()
-{
+function create_ranked_gene_list(){
 	var html = '<table class="bluetop">';
-	for ( i=0; i < 3; i++)
-	{		
-		if (i == 0)
-		{	
+	for ( i=0; i < 3; i++) {		
+		if (i == 0)	{	
 			var table_head = 10;
 		}
-		else
-		{
+		else{
 			var table_head = (i + 1) * 10;
 		}
 		
 		var html = html + '<tr><td>Top ' + table_head + '</td>';
 
-		for (j=0; j<10; j++)
-		{
+		for (j=0; j<10; j++){
 		var rank = String(i) + String(j);
 		var rank = Number(rank);
 		var gene = rank_gene[rank];
@@ -353,43 +340,107 @@ function create_ranked_gene_list()
 		var html = html + '</tr>';
 	}
 	var html = html + '</table>';
-
 	$('#ranked_gene_list').html(html);
 }
-
 create_ranked_gene_list();
 
+function create_condition_color_dict(grouplist){
+	var condition_color_dict = {};
+	for (i=0; i < grouplist.length; i++){
+
+		condition = grouplist[i];
+		div.select('.venn-nodes').selectAll('circle').filter( function(d){
+			if ( condition = d.group ){
+				 var selection_results = d3.select(this).attr('style');
+				 if (selection_results !== 'null'){
+					 condition_color_dict[condition] = selection_results;
+				 }
+				 if (selection_results == null){
+					 condition_color_dict[condition] = 'rgb(31, 31, 31);';
+				 }
+			}
+		});
+	}
+	return condition_color_dict;
+}
+var condition_color_dict = create_condition_color_dict(grouplist);
+//I think its ok to use as global variable
+
+//Create Legend for circles = condition
+function create_venngraph_legend(grouplist, condition_color_dict){
+
+	var html = '';
+	for (i=0; i < grouplist.length; i++){
+		var condition = grouplist[i];
+		var condition = condition.label;
+		var condition_color = condition_color_dict[condition];
+		var condition_color = condition_color.replace('fill:','');
+		var html = html + '<i class="fas fa-circle" style="color:' + condition_color + '"></i><font style="color:' + condition_color + '">' + condition + '</font> ';
+
+	$('#venngraph_legend').html(html);
+	}
+}
+create_venngraph_legend(grouplist, condition_color_dict);
+
+
+
+
+//Click event for node highlight.
 $(document).on('click', '#ranked_gene_list', function(event)
 {
 	var gene_node = $(event.target).text();
-
 	var circle_list = div.select('.venn-nodes').selectAll('circle')
 	circle_list.filter(function (d){
-		if ( d.name == gene_node )
-		{
+		if ( d.name == gene_node ) 	{
 			//this : <circle r="2px" cx="289.70425992453056" cy="286.77604126827646" style="fill: rgb(31, 119, 180);"></circle>
-
-			d3.select(this).style('fill', 'rgb(140,0,0)')
-			d3.select(this).attr('r', 5)
-		}
-	});
-
-	var circle_list = div.select('.venn-nodes').selectAll('circle')
-	circle_list.filter(function (d){
-	if ( d.name == gene_node )
-		{
 			var node_color = d3.select(this).attr('style')
-			console.log(node_color)
+
+			if (node_color == 'fill: rgb(140, 0, 0);'){
+				console.log(d)
+				console.log(d.group)
+				console.log(condition_color_dict)
+
+				var condition_color = condition_color_dict[d.group]
+				var condition_color = condition_color.replace('fill: ','')
+				var condition_color = condition_color.replace(';','')
+				console.log(typeof(condition_color))
+				console.log(condition_color)
+				d3.select(this).style('fill', condition_color)
+				d3.select(this).attr('r', '2px')
+			}
+
+			if (node_color !== 'fill: rgb(140, 0, 0);'){
+				d3.select(this).style('fill', 'rgb(140, 0, 0)')
+				d3.select(this).attr('r', '5px')
+			}
 		}
 	});
+
+
 
 });
+
+
+//Click event : change color of table
+$('td').click(function () {
+	//Check to see if background color is set or if it's set to white.
+	if(this.style.background == "" || this.style.background =="white") {
+		$(this).css('background', 'grey');
+	}
+	else {
+		$(this).css('background', 'white');
+	}
+});
+
+
+
 
 
 // 6. hide loading message
 $('#loading').hide();
 $('#result_download_link').show();
 $('#venngraph').show();
+$('#venngraph_legend').show();
 $('#panel_close').on('click', function() { $('#panel').hide(); });
 
 });
