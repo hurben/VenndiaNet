@@ -373,12 +373,19 @@ function create_venngraph_legend(grouplist, condition_color_dict){
 	for (i=0; i < grouplist.length; i++){
 		var condition = grouplist[i];
 		var condition = condition.label;
+
+		if ( condition.includes('__') == false){
+
 		var condition_color = condition_color_dict[condition];
 		var condition_color = condition_color.replace('fill:','');
 		var html = html + '<i class="fas fa-circle" style="color:' + condition_color + '"></i><font style="color:' + condition_color + '">' + condition + '</font> ';
+		}
+	}
+
+	console.log('repeated? suspect region');
+	var html = html + '<i class="fas fa-circle" style="color:rgb(31,31,31);"></i><font style="color:rgb(31,31,31)">intersection of multiple condition</font> ';
 
 	$('#venngraph_legend').html(html);
-	}
 }
 create_venngraph_legend(grouplist, condition_color_dict);
 
