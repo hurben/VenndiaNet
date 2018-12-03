@@ -4,6 +4,7 @@ from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 import random, string, sys, os, json
 import MLV
+import threading
 
 def main(request):
 	return render(request, 'main.html')
@@ -56,6 +57,13 @@ def step_upload(request, id):
 
 	if (request.method == "POST"):
 		# prepare to save file
+		if (os.path.exists('work/%s/f' % id) == True):
+
+			clean_files_cmd = 'rm work/%s/f/*' % id
+			os.system(clean_files_cmd)
+			clean_files_cmd = 'rm work/%s/*.mlv' % id
+			os.system(clean_files_cmd)
+
 		if (not os.path.exists('work/%s/f' % id)):
 			os.mkdir('work/%s/f' % id, 0775)
 		s['files'] = []
@@ -153,6 +161,10 @@ def step_params(request, id):
 
 	return render(request, 'settings.html', {'id': id, 'state': s, 'selected_condition': selected_condition})
 
+def RWR_thread(id):
+
+	MLV.Run_RWR(id)
+
 def result(request, id):
 
 	if (not validate(id)):
@@ -163,15 +175,28 @@ def result(request, id):
 	if (s['state'] == 'not_uploaded'):
 		return render(request, 'invalid.html', {'id': id, 'state': s})
 
-	MLV.Run_RWR(id)
-	cutoff, sorting_order, cutoff_gene_list = MLV.After_RWR(id)
-	gene_rank_dict, gene_condition_dict, condition_id_dict = MLV.Create_Result_Summary(id, cutoff, sorting_order)
-	gene_color_dict = MLV.Create_Gene_Color_dict(cutoff_gene_list, gene_condition_dict, condition_id_dict)
+#	MLV.Run_RWR(id)
+#	cutoff, sorting_order, cutoff_gene_list = MLV.After_RWR(id)
+#	gene_rank_dict, gene_condition_dict, condition_id_dict = MLV.Create_Result_Summary(id, cutoff, sorting_order)
+#	gene_color_dict = MLV.Create_Gene_Color_dict(cutoff_gene_list, gene_condition_dict, condition_id_dict)
+#	rank_gene_dict = MLV.Create_Rank_Gene_dict(gene_rank_dict)
+#	manage_result_file_cmd ='cp work/%s/%s.result.summary //var/www/html/MLV_PUBLIC/upload/%s'% (work_id, work_id, work_id)
+#	os.system(manage_result_file_cmd)
 
-	rank_gene_dict = MLV.Create_Rank_Gene_dict(gene_rank_dict)
+	t = threading.Thread(target=RWR_thread, args=(id,))
+	t.start()
 
-	manage_result_file_cmd ='cp work/%s/%s.result.summary //var/www/html/MLV_PUBLIC/upload/%s'% (work_id, work_id, work_id)
-	os.system(manage_result_file_cmd)
+	if (os.path.exists('work/%s/RWR.result' % id) == True):
+		cutoff, sorting_order, cutoff_gene_list = MLV.After_RWR(id)
+		gene_rank_dict, gene_condition_dict, condition_id_dict = MLV.Create_Result_Summary(id, cutoff, sorting_order)
+		gene_color_dict = MLV.Create_Gene_Color_dict(cutoff_gene_list, gene_condition_dict, condition_id_dict)
+		rank_gene_dict = MLV.Create_Rank_Gene_dict(gene_rank_dict)
+
+		manage_result_file_cmd ='cp work/%s/%s.result.summary //var/www/html/MLV_PUBLIC/upload/%s'% (work_id, work_id, work_id)
+		os.system(manage_result_file_cmd)
+
+	else:
+		return render(request, 'invalid.html', {'id': id, 'state': s})
 
 	# if result is not yet,
 	# do automatic refresh

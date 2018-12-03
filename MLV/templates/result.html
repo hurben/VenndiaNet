@@ -399,6 +399,8 @@ $(document).on('click', '#ranked_gene_list', function(event)
 	var circle_list = div.select('.venn-nodes').selectAll('circle')
 	circle_list.filter(function (d){
 		if ( d.name == gene_node ) 	{
+			node_click(d, 0);
+
 			//this : <circle r="2px" cx="289.70425992453056" cy="286.77604126827646" style="fill: rgb(31, 119, 180);"></circle>
 			var node_color = d3.select(this).attr('style')
 
