@@ -19,8 +19,8 @@
     {% csrf_token %}
     <input type="text" name="cutoff" value="None">
 	<br>
-	<input type="radio" id="Descend" name="sort_method" value="descend" checked \><label for="Descend">Descending</label>
-	<input type="radio" id="Ascend" name="sort_method" value="ascend"><label for="Ascend">Ascending</label>
+	<input type="radio" id="Similarity (Descend)" name="sort_method" value="descend" checked \><label for="Descend">Descending</label>
+	<input type="radio" id="Dissimilarity (Ascend)" name="sort_method" value="ascend"><label for="Ascend">Ascending</label>
     <input type="submit" class="btn btn-primary" value="Run">
     </div>
   </form>
