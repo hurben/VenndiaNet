@@ -8,18 +8,42 @@
 {% endblock widget %}
 
 {% block content %}
-Your task id is {{ id }}.
+<h3>Settings</h3>
+<strong>Selected Condition :</strong> 
+<div id="SelectedCondition"></div> <br>
 
-<h3>Set parameters.</h3>
-<span>Set parameter of Random-walk function.</span>
 
-<div class="upload_form">
+<div id="insufficient_settings" style="display: none;">Condition for seeds are not selected.<br>Please selected condition for seeds</div>
+<div id="run_mlv" class="upload_form">
   <form action="." method="POST" enctype="application/x-www-form-urlencoded">
     {% csrf_token %}
-    <input type="text" name="cutoff" value="0.2">
+    <input type="text" name="cutoff" value="None">
+	<br>
+	<input type="radio" id="Similarity (Descend)" name="sort_method" value="descend" checked \><label for="Descend">Descending</label>
+	<input type="radio" id="Dissimilarity (Ascend)" name="sort_method" value="ascend"><label for="Ascend">Ascending</label>
     <input type="submit" class="btn btn-primary" value="Run">
     </div>
   </form>
 </div>
+
+<script>
+
+//var SelectedCondition = document.getElementById("SelectedCondition");
+//var SelectedCondition = SelectedCondition.innerHTML;
+
+var SelectedCondition = '{{ selected_condition | safe }}';
+var div_SelectedCondition = document.getElementById("SelectedCondition");
+
+var seed_info_file = 'test';
+
+if (SelectedCondition == 'None')
+{
+	document.getElementById("run_mlv").style.display = "none";
+	document.getElementById("insufficient_settings").style.display = "block";
+}
+
+div_SelectedCondition.innerHTML += SelectedCondition;
+
+</script>
 
 {% endblock content %}

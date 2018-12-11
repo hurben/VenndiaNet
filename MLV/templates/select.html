@@ -8,10 +8,9 @@
 {% endblock widget %}
 
 {% block content %}
-Your task id is {{ id }}.
 
 <h3>Select condition set.</h3>
-<span>Select/exclude conditions to be analyzed.</span>
+<span id="message">Select conditions that will be used as "Seeds"</span>
 
 <div class="row-select">
   <div class="left" id="venn"></div>
@@ -19,25 +18,6 @@ Your task id is {{ id }}.
 </div>
 
 <style>
-.venntooltip {
-  font-size : 10pt;
-  position: absolute;
-  text-align: center;
-  width: 250px;
-  min-height: 60px;
-  background: #333;
-  color: #fff;
-  padding: 2px;  
-  border: 0px;
-  border-radius: 8px;
-  opacity: 0;
-}
-.label {
-  font-size: 9pt;
-  font-weight: 700;
-}
-.venn-intersection .label { display: none; }
-.venn-circle { opacity: 0.6; }
 .selected {
   opacity: 1.0;
 }
@@ -60,8 +40,13 @@ Your task id is {{ id }}.
 // --------
 // combination map
 $(function() {
-var clr = d3.scaleOrdinal(d3.schemeCategory10);
 var combs={{ combination | safe }};
+var conds_ = [];
+for (var i=0; i<combs.rows.length; i++)
+{
+  conds_.push(combs.rows[i].name);
+}
+var clr = ColorMultiset(conds_).color;   // colorset optimized for multiset
 var cols = combs.cols;
 var rows = combs.rows;
 for (i=0; i<rows.length; i++)
@@ -163,6 +148,13 @@ window.update_form_data = function()
   });
   $("#selection").val( sel.join(",") );
 }
+
+// resizing
+function resize_multisetpanel()
+{
+  // do nothing here
+}
+window.addEventListener("resize", resize_multisetpanel);
 });
 
 
@@ -175,8 +167,13 @@ window.update_form_data = function()
 // display sets as venn diagram.
 
 $(function() {
-var clr = d3.scaleOrdinal(d3.schemeCategory10);
 var sets={{ venn | safe }};
+var conds_ = [];
+for (var i=0; i<sets.length; i++)
+{
+  conds_.push(sets[i].sets.join('__'));
+}
+var clr = ColorMultiset(conds_).color;   // colorset optimized for multiset
 for (i=0; i<sets.length; i++)
 {
   sets[i].selected = false;
@@ -186,7 +183,8 @@ for (i=0; i<sets.length; i++)
 
 var chart = venn.VennDiagram()
   .width(600)
-  .height(500);
+  .height(500)
+  .colours(clr);
 //var div = d3.select("#venn").datum(sets).call(chart);
 var div = d3.select("#venn").datum(sets);
 var _chart = chart(div);  // includes radius and so on
@@ -195,9 +193,8 @@ div.selectAll(".venn-circle path")
   .style("fill-opacity", .8)
   .style("stroke-width", 1)
   .style("stroke-opacity", 1)
-  .style("stroke", "fff")
+  .style("stroke", "fff");
   //.style("fill", function(d,i){ return d.color; });
-  .style("fill", function(d,i){ return clr(d.label); });
 
 var tooltip = d3.select("#venn").append("div")
 .attr("class", "venntooltip");
@@ -234,6 +231,7 @@ div.selectAll("g")
 })
 
 .on("click", function(d, i) {
+  if (d.label.indexOf(' and ')>0) return;
   // toggle input form
   d.selected = !d.selected;
   d.excluded = false;
@@ -241,11 +239,12 @@ div.selectAll("g")
   // highlight the current path
   var selection = d3.select(this).transition("tooltip").duration(400);
   selection.select("path")
-      //.style("fill", d.selected?"#f99":d.color );
-      .style("fill", d.selected?"#f99":clr(d.label) );
+      .style("fill", d.selected?"#f99":d.color );
+  $("#message").text("'" + d.label + "' condition had been " + (d.selected?"selected.":"resetted."));
 })
 
 .on("contextmenu", function(d, i) {
+  if (d.label.indexOf(' and ')>0) return;
   d3.event.preventDefault();
   // toggle input form
   d.selected = false;
@@ -254,8 +253,8 @@ div.selectAll("g")
   // highlight the current path
   var selection = d3.select(this).transition("tooltip").duration(400);
   selection.select("path")
-      //.style("fill", d.excluded?"#999":d.color );
-      .style("fill", d.excluded?"#999":clr(d.label) );
+      .style("fill", d.excluded?"#999":d.color );
+  $("#message").text("'" + d.label + "' condition had been " + (d.excluded?"excluded.":"resetted."));
 });
 
 // depreciated
@@ -293,6 +292,27 @@ function update_combination_from_venn()
   window.select_combination(sel,exc);
   window.update_form_data();
 }
+
+// resizing
+function resize_venn()
+{
+  var width = $("div.row-select").width() - 250;
+  var height = window.innerHeight - 250;
+  if (width < 600) width = 600;
+  if (height < 500) height = 500;
+  div.style('width', width).style('height', height);
+  // do transform
+  // (basic center: 600, 500)
+  var tsx = (width-600)/2;
+  var tsy = (height-500)/2;
+  var sx = width/600, sy=height/500;
+  sc = (sx>sy)?sy:sx;
+  var svg = div.select('svg');
+  //svg.style('width', width).style('height', height);
+  svg.attr("transform", "translate(" + tsx + "," + tsy + ") scale(" + sc + "," + sc + ")");
+}
+window.addEventListener("resize", resize_venn);
+resize_venn();
 
 });
 </script>
