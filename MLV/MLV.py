@@ -289,6 +289,83 @@ def Create_Rank_Gene_dict(gene_rank_dict):
 
 	return rank_gene_dict
 
+
+def Create_Rank_Gene_dict_without_seeds(rank_gene_dict, seed_gene_list):
+
+	rank_idx = 0
+	rank_gene_without_seed_dict = {}
+
+	for rank in rank_gene_dict.keys():
+		gene = rank_gene_dict[rank]
+
+		if gene not in seed_gene_list:
+			rank_gene_without_seed_dict[rank_idx] = gene
+			rank_idx += 1
+
+	return rank_gene_without_seed_dict
+
+
+def Gene_Color_Rank_dict(rank_gene_dict, sorting_order, work_id):
+
+
+	seed_info_dir = 'work/%s/seeds.txt' % work_id
+	seed_file = open(seed_info_dir,'r')
+	seed_file_readlines = seed_file.readlines()
+
+	seed_gene_list = []
+
+	for i in range(len(seed_file_readlines)):
+		read = seed_file_readlines[i]
+		read = read.replace('\n','')
+		if '#' not in read:
+			seed_gene_list.append(read)
+
+
+	gene_rank_color_dict = {}
+
+	#hex_color = ['#BD0013','#BB192D','#BA3347','#B94D61','#B8677B','#B78096','#B69AB0','#B5B4CA','#B4CEE4','#B3E8FF']
+	#hex_color = ['#BD0013','#C41C2D','#CB3847','#D35561','#DA717B','#E18D96','#E9AAB0','#F0C6CA','#F7E2E4','#FFFFFF']
+	#hex_color = ['#BD0013','#C3192A','#CA3342','#D04C59','#D76671','#DE7F89','#E499A0','#EBB2B8','#F1CCCF','#F8E5E7','#FFFFFF']
+	hex_color = ['#BD0013','#CA3342','#D76671','#E499A0','#F1CCCF','#FFFFFF']
+	rgb_color = []
+
+	for hex_code in hex_color:
+		value = hex_code.replace('#','')
+		lv = len(value)
+		rgb = tuple(int(value[i:i + lv // 3], 16) for i in range(0, lv, lv // 3))
+		rgb = str(rgb)
+		rgb_color.append('rgb%s' % rgb)
+
+
+	if sorting_order == 'ascend':
+		rgb_color = rgb_color[::-1]
+
+	maximum_len_genes = len(rank_gene_dict.keys()) 
+	#chunck_size = int(round(maximum_len_genes / 10))
+	chunck_size = int(round(maximum_len_genes / 5))
+	rank_idx = 0
+
+	#for color_idx in range(11):
+	for color_idx in range(6):
+		left_chunck = chunck_size * color_idx
+		right_chunck = chunck_size * (color_idx + 1)
+		print left_chunck, right_chunck
+
+		for rank_idx in range(left_chunck, right_chunck):
+			try :
+				gene = rank_gene_dict[rank_idx]
+				if gene in seed_gene_list:
+					gene_rank_color_dict[gene] = 'rgb(0, 0, 0,0)'
+				else:
+					gene_rank_color_dict[gene] = rgb_color[color_idx]
+			except KeyError:
+				break
+
+
+	return gene_rank_color_dict, seed_gene_list
+
+
+
 def Create_Gene_Color_dict(cutoff_gene_list, gene_condition_dict, condition_id_dict):
 	#Would be better if i used dataframe..
 	colorset_list = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
@@ -301,15 +378,17 @@ def Create_Gene_Color_dict(cutoff_gene_list, gene_condition_dict, condition_id_d
 		if gene in cutoff_gene_list:
 
 			if '__' not in condition:
-				color_id = int(condition_id) - 1
-				color_code = colorset_list[color_id]
+				try :
+					color_id = int(condition_id) - 1
+					color_code = colorset_list[color_id]
+				except IndexError:
+					color_code = '#262626'
 			if '__' in condition:
 				color_code = '#262626'
 		else:
 			color_code = '#e5e5e5'
 
 		gene_color_dict[gene] = color_code
-		
 
 	return gene_color_dict	
 

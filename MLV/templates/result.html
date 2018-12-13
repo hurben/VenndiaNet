@@ -43,6 +43,12 @@
 
 <span></span>
 <div id="venngraph_legend" style="display: none;"></div>
+
+<div id="venngraph_legend_rwr">
+	<button id="change_node_color_rank">Color by Propagation Results</button>
+	<button id="change_node_color_sets">Color by Sets</button>
+</div>
+
 <div id="venngraph" style="position: relative; border: 3px solid #168; height:80%; width:80%; display: none;"></div>
 <div id="ranked_gene_list"></div>
 
@@ -60,7 +66,9 @@
 $(function() {
 var graph = {{ graph | safe }};
 var gene_rank = {{ gene_rank | safe }};
+var rank_gene_without_seed_dict = {{ rank_gene_without_seed_dict | safe }};
 var rank_gene = {{ rank_gene | safe }};
+var gene_rank_color = {{ gene_rank_color | safe }};
 
 var nodes = graph.nodes;
 var edges = graph.edges;
@@ -334,7 +342,7 @@ function create_ranked_gene_list(){
 		for (j=0; j<10; j++){
 		var rank = String(i) + String(j);
 		var rank = Number(rank);
-		var gene = rank_gene[rank];
+		var gene = rank_gene_without_seed_dict[rank];
 		var html = html + '<td>' + gene + '</td>';
 		}
 		var html = html + '</tr>';
@@ -368,7 +376,6 @@ var condition_color_dict = create_condition_color_dict(grouplist);
 
 //Create Legend for circles = condition
 function create_venngraph_legend(grouplist, condition_color_dict){
-
 	var html = '';
 	for (i=0; i < grouplist.length; i++){
 		var condition = grouplist[i];
@@ -405,9 +412,6 @@ $(document).on('click', '#ranked_gene_list', function(event)
 			var node_color = d3.select(this).attr('style')
 
 			if (node_color == 'fill: rgb(140, 0, 0);'){
-				console.log(d)
-				console.log(d.group)
-				console.log(condition_color_dict)
 
 				var condition_color = condition_color_dict[d.group]
 				var condition_color = condition_color.replace('fill: ','')
@@ -417,17 +421,51 @@ $(document).on('click', '#ranked_gene_list', function(event)
 				d3.select(this).style('fill', condition_color)
 				d3.select(this).attr('r', '2px')
 			}
-
 			if (node_color !== 'fill: rgb(140, 0, 0);'){
 				d3.select(this).style('fill', 'rgb(140, 0, 0)')
 				d3.select(this).attr('r', '5px')
 			}
 		}
 	});
-
-
-
 });
+
+
+//click event for clicking button: Change node color to propagated score
+$(document).on('click', '#change_node_color_rank', function(event)
+{
+	console.log('YOU CLICKED RANK');
+	var circle_list = div.select('.venn-nodes').selectAll('circle')
+	circle_list.filter(function (d){
+	
+		var gene_name = d.name;
+		var rank_color = gene_rank_color[gene_name];
+
+		d3.select(this).style('fill', rank_color);
+		
+	});
+});
+
+
+$(document).on('click', '#change_node_color_sets', function(event)
+{
+	console.log('YOU CLICKED SET');
+
+	var circle_list = div.select('.venn-nodes').selectAll('circle')
+	circle_list.filter(function (d){
+	
+		var gene_name = d.name;
+		var condition = d.group;
+		var condition_color = condition_color_dict[condition];
+		var condition_color = condition_color.replace('fill: ','')
+		var condition_color = condition_color.replace(';','')
+
+		d3.select(this).style('fill', condition_color);
+	});
+});
+
+
+
+
 
 
 //Click event : change color of table
