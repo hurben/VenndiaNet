@@ -270,7 +270,12 @@ def Create_Result_Summary(path, cutoff, sort_order):
 
 		prob = rwr_dict[gene]
 		output_txt.write('%s\t%s\t%s'% (i, gene, prob))
-		gene_rank_dict[gene] = i
+
+#modified 19.03.20
+#issue : number is zero-based
+#soluction : change it to 1 -based
+#		gene_rank_dict[gene] = i
+		gene_rank_dict[gene] = i + 1
 
 		condition = gene_condition_dict[gene]
 		output_txt.write('\t%s\n'% condition)
