@@ -79,6 +79,7 @@ def generate_venn(path):
 	genenames = []
 
 	for cond,genes in groups.items():
+		
 		for g in genes:
 			genenames.append(g)
 			gene_cond_data.append( (0,cond,'',0) )
@@ -86,10 +87,16 @@ def generate_venn(path):
 	df.to_csv('work/%s/pvalue.txt'%s['id'])
 	# save group information (each gene contains multiple group(cond))
 
+
 	with open('work/%s/group.txt'%s['id'],'w') as f:
 		#for (df,fn) in zip(dfs,s['files']):
 		#  f.write('%s\t%d\t%s\n' % (fn, len(genes), ','.join(genes)))
-		for cond,genes in groups_in.items():
+		for cond,genes in groups.items():
+
+#		for cond,genes in groups_in.items():
+#19.03.20
+#why? groups_in
+
 			if (len(genes) <= 0):
 				continue
 			f.write('%s\t%d\t%s\n' % (cond, len(genes), ','.join(genes)))
