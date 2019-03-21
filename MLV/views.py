@@ -175,14 +175,6 @@ def result(request, id):
 	if (s['state'] == 'not_uploaded'):
 		return render(request, 'invalid.html', {'id': id, 'state': s})
 
-#	MLV.Run_RWR(id)
-#	cutoff, sorting_order, cutoff_gene_list = MLV.After_RWR(id)
-#	gene_rank_dict, gene_condition_dict, condition_id_dict = MLV.Create_Result_Summary(id, cutoff, sorting_order)
-#	gene_color_dict = MLV.Create_Gene_Color_dict(cutoff_gene_list, gene_condition_dict, condition_id_dict)
-#	rank_gene_dict = MLV.Create_Rank_Gene_dict(gene_rank_dict)
-#	manage_result_file_cmd ='cp work/%s/%s.result.summary //var/www/html/MLV_PUBLIC/upload/%s'% (work_id, work_id, work_id)
-#	os.system(manage_result_file_cmd)
-
 	t = threading.Thread(target=RWR_thread, args=(id,))
 	t.start()
 
@@ -192,6 +184,9 @@ def result(request, id):
 		gene_color_dict = MLV.Create_Gene_Color_dict(cutoff_gene_list, gene_condition_dict, condition_id_dict)
 		rank_gene_dict = MLV.Create_Rank_Gene_dict(gene_rank_dict)
 
+		gene_rank_color_dict, seed_gene_list = MLV.Gene_Color_Rank_dict(rank_gene_dict, sorting_order, work_id)
+		rank_gene_without_seed_dict = MLV.Create_Rank_Gene_dict_without_seeds(rank_gene_dict,seed_gene_list)
+
 		manage_result_file_cmd ='cp work/%s/%s.result.summary //var/www/html/MLV_PUBLIC/upload/%s'% (work_id, work_id, work_id)
 		os.system(manage_result_file_cmd)
 
@@ -200,4 +195,4 @@ def result(request, id):
 
 	# if result is not yet,
 	# do automatic refresh
-	return render(request, 'result.html', {'id': id, 'state': s, 'graph':json.dumps(MLV.read_graph(id)), 'gene_rank' : gene_rank_dict, 'rank_gene' : rank_gene_dict, 'gene_color' : gene_color_dict})
+	return render(request, 'result.html', {'id': id, 'state': s, 'graph':json.dumps(MLV.read_graph(id)), 'gene_rank' : gene_rank_dict, 'rank_gene' : rank_gene_dict, 'gene_color' : gene_color_dict, 'gene_rank_color': gene_rank_color_dict, 'rank_gene_without_seed_dict': rank_gene_without_seed_dict})

@@ -281,7 +281,7 @@ class Graph_Methods():
 		StringDB_dict, SortGene_list = StringDB_to_dict()
 
 		json_string = Graph_Methods().Create_Json_Template(json_string, 1)
-		json_string = Graph_Methods().Create_Node_Json(condition_dict, json_string)
+		json_string = Graph_Methods().Create_Node_Json(condition_dict, json_string, StringDB_dict)
 		json_string = Graph_Methods().Create_Json_Template(json_string, 2)
 		json_string = Graph_Methods().Create_Edge_Json(gene_list, StringDB_dict, json_string)
 		json_string = Graph_Methods().Create_Json_Template(json_string, 3)
@@ -301,9 +301,9 @@ class Graph_Methods():
 		StringDB_dict, SortGene_list = StringDB_to_dict()
 
 		json_string = Graph_Methods().Create_Json_Template(json_string, 1)
-		json_string = Graph_Methods().Create_Node_Json_ver_CUTOFF(condition_dict, json_string, cutoff_gene_list)
+		json_string = Graph_Methods().Create_Node_Json_ver_CUTOFF(condition_dict, json_string, cutoff_gene_list, StringDB_dict)
 		json_string = Graph_Methods().Create_Json_Template(json_string, 2)
-		json_string = Graph_Methods().Create_Edge_Json(gene_list, StringDB_dict, json_string)
+		json_string = Graph_Methods().Create_Edge_Json_ver_CUTOFF(gene_list, StringDB_dict, json_string, cutoff_gene_list)
 		json_string = Graph_Methods().Create_Json_Template(json_string, 3)
 
 		graph_json_open.write(json_string)
@@ -319,34 +319,31 @@ class Graph_Methods():
 			json_string += ']}'
 		return json_string
 
-	def Create_Node_Json(self, condition_dict, json_string):
+	def Create_Node_Json(self, condition_dict, json_string, StringDB_dict):
 
 		for condition in condition_dict.keys():
 			gene_list = condition_dict[condition]
 			if len(gene_list) != 0:
 				for gene in gene_list:
-					json_string += '{"group": "%s", "name": "%s", "value": %s},'% (condition, gene, 1)
+					if gene in StringDB_dict.keys():
+						json_string += '{"group": "%s", "name": "%s", "value": %s},'% (condition, gene, 1)
 			
 		json_string = json_string[:len(json_string) -1] #removing unnecessaory colon(,)
 		return json_string
 
-	def Create_Node_Json_ver_CUTOFF(self, condition_dict, json_string, cutoff_gene_list):
+	def Create_Node_Json_ver_CUTOFF(self, condition_dict, json_string, cutoff_gene_list, StringDB_dict):
 
 		for condition in condition_dict.keys():
 			gene_list = condition_dict[condition]
 			if len(gene_list) != 0:
 				for gene in gene_list:
-					if gene not in cutoff_gene_list:
-						value = 0 
-					else:
-						value = 1
-
-					json_string += '{"group": "%s", "name": "%s", "value": %s},'% (condition, gene, value)
-			
+					if gene in StringDB_dict:
+						if gene not in cutoff_gene_list:
+							json_string += '{"group": "%s", "name": "%s", "value": %s},'% (condition, gene, 1)
+						#json_string += '{"group": "%s", "name": "%s", "value": %s},'% (condition, gene, value)
+				
 		json_string = json_string[:len(json_string) -1] #removing unnecessaory colon(,)
 		return json_string
-
-
 
 	def Create_Edge_Json(self, gene_list, StringDB_dict, json_string):
 	
@@ -361,6 +358,23 @@ class Graph_Methods():
 
 		json_string = json_string[:len(json_string) -1] #removing unnecessaory colon(,)
 		return json_string
+
+	def Create_Edge_Json_ver_CUTOFF(self, gene_list, StringDB_dict, json_string, cutoff_gene_list):
+	
+		for source_gene in gene_list:
+
+			if source_gene in StringDB_dict.keys():
+				if source_gene not in cutoff_gene_list:
+					target_gene_list = StringDB_dict[source_gene]
+
+					for target_gene in target_gene_list:
+						if target_gene not in cutoff_gene_list:
+							if target_gene in gene_list:
+								json_string += '{"source": "%s", "target": "%s", "weight": %s},'% (source_gene, target_gene, 1)
+
+		json_string = json_string[:len(json_string) -1] #removing unnecessaory colon(,)
+		return json_string
+
 
 
 
