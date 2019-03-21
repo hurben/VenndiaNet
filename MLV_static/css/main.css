@@ -1,0 +1,10 @@
+.container { padding-top: 120px; }
+.title { font-family: 'Roboto Condensed', sans-serif; padding-bottom: 60px; }
+.title h1 { font-weight: bold; }
+.title .small { color: #999; }
+
+/* submit section */
+.row-submit { padding-bottom: 60px; }
+.btn-submit { width: 100%; }
+
+/* desc section */

@@ -1,0 +1,85 @@
+body { height: 100%; }
+
+.container-fluid { padding: 0; }
+.container-fluid > .left { width: 20%; float: left; height: 100%; background: #f0f0f0; }
+.container-fluid > .right { width: 80%; float: right; }
+.left .widget > a { display: block; padding: 2rem 1.5rem; font-size: 13pt; }
+
+@media (max-width: 800px) {
+.left { clear: both; float:none; width: 100%; height: auto; }
+.right { clear: both; float:none; width: 100%; }
+.left .widget > a { display: inline-block; }
+}
+
+.content { padding : 20px 20px; }
+
+.upload_form { padding-top : 40px; }
+.upload_control { padding-bottom: 20px; }
+
+.mode-upload .widget .upload,
+.mode-select .widget .select,
+.mode-setting .widget .setting,
+.mode-result .widget .result { font-weight: bold; }
+
+
+
+/* venn screen */
+.venntooltip {
+  font-size : 10pt;
+  position: absolute;
+  text-align: center;
+  width: 250px;
+  min-height: 60px;
+  background: #333;
+  color: #fff;
+  padding: 5px;  
+  border: 0px;
+  border-radius: 8px;
+  opacity: 0;
+
+  user-select: none;
+  pointer-events: none;
+  overflow:hidden;
+}
+.venntooltip.small { min-height: 24px; width: 180px; }
+.label {
+  font-size: 9pt;
+  font-weight: 700;
+}
+.venn-intersection .label { display: none; }
+.venn-circle { opacity: 0.6; }
+
+.row-select { clear:both; overflow:hidden; min-width: 820px; }
+.row-select .left { float: left; }
+.row-select .right { float: right; width: 220px; }
+
+/* result screen */
+.container-fluid .content { position: relative; height: 100%; }
+#venngraph {
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 100%;
+  overflow: hidden;
+}
+#loading {
+  position: absolute; top: 50%; left: 50%;
+  width: 600px; height: 80px; margin-left: -300px; margin-top: -40px;
+  font-size: 56pt; color: #ccc; font-weight: bold;
+}
+#panel {
+  position: absolute; top:0; right: 0;
+  font-size: 11pt;
+  width: 240px; background-color: rgba(0,0,0,0.7);
+  display: none;
+  padding: 20px; height: 100%; color: #fff;
+  overflow-y: scroll;
+}
+
+/* venennode module */
+.venn-nodes circle { }
+.venn-nodes circle:hover { fill: white; stroke: black; }
+.venn-nodes circle.connected { stroke: black; }
+.venn-nodes circle.notconnected { opacity: 0.5; }
+.venn-edges line { stroke: black; opacity: 0.4; }
+.venn-edges line.connected { }
+.venn-edges line.notconnected { display: none; }
+.venn-nodes-text text { font-size: 2px; color: #000; }
