@@ -1,0 +1,494 @@
+{% extends 'task_common.html' %}
+
+{% block title %}MLV Task - Result{% endblock title %}
+{% block mode %}result{% endblock mode %}
+
+{% block widget %}
+{% include 'widgets.html' with id=id %}
+{% endblock widget %}
+
+{% block content %}
+
+<style>
+	body { background: #fff; }
+	.bluetop {
+	  border-collapse: collapse;
+	  border-top: 3px solid #168;
+	}  
+	.bluetop th {
+	  color: #168;
+	  background: #f0f6f9;
+	}
+	.bluetop th, .bluetop td {
+	  padding: 10px;
+	  border: 1px solid #ddd;
+	}
+	.bluetop th:first-child, .bluetop td:first-child {
+	  border-left: 0;
+	}
+	.bluetop th:last-child, .bluetop td:last-child {
+	  border-right: 0;
+	}
+	.bluetop td:first-child {
+	  color: #168;
+	  background: #f0f6f9;
+	}
+</style>
+
+
+<h3>Result</h3>
+<div id="result_download_link" style="display: none;">
+	<a href="//bhi2.snu.ac.kr/MLV_PUBLIC/upload/{{ id }}" download\>Download Link</a>
+</div>
+
+<span></span>
+<div id="venngraph_legend" style="display: none;"></div>
+
+<div id="venngraph_legend_rwr">
+	<button id="change_node_color_rank">Color by Propagation Results</button>
+	<button id="change_node_color_sets">Color by Sets</button>
+</div>
+
+<div id="venngraph" style="position: relative; border: 3px solid #168; height:80%; width:80%; display: none;"></div>
+<div id="ranked_gene_list"></div>
+
+<div id="loading">PLEASE WAIT ...</div>
+<div id="panel">
+  <div id="panel_info">
+    <h3 id="title">Title</h3></a>
+    <div id="text">Text</div>
+    <div class="bottom"><a id="panel_close" href="#">Close</a></div>
+  </div>
+</div>
+
+<script>
+//  /var/www/htdocs/MLV/dongwon_module/VIS/htdocs/js/main.js
+$(function() {
+var graph = {{ graph | safe }};
+var gene_rank = {{ gene_rank | safe }};
+var rank_gene_without_seed_dict = {{ rank_gene_without_seed_dict | safe }};
+var rank_gene = {{ rank_gene | safe }};
+var gene_rank_color = {{ gene_rank_color | safe }};
+
+var nodes = graph.nodes;
+var edges = graph.edges;
+var div = d3.select("#venngraph");
+
+console.log('Total node count: ' + nodes.length);
+console.log('Total edge count: ' + edges.length);
+
+// 0. generate group count data for venn graph
+var groups = {};
+for (var i=0; i<nodes.length; i++)
+{
+  nodes[i].idx = i;   // additional information for vennGraph
+  if (!(nodes[i].group in groups)) groups[nodes[i].group] = 0;
+}
+var kconds = []
+for (var k in groups) { kconds.push( k.split('__') ); }
+for (var i=0; i<nodes.length; i++)
+{
+  var cond = nodes[i].group;
+  for (var j=0; j<kconds.length; j++)
+  {
+    var condvalid = true;
+    for (var k=0; k<kconds[j].length; k++)
+    {
+      if (cond.indexOf(kconds[j][k])<0)
+      {
+        condvalid = false;
+        break;
+      }
+    }
+    if (condvalid) { groups[Object.keys(groups)[j]]++; }
+  }
+}
+var grouplist = [];
+for (var k in groups)
+{
+  grouplist.push( {'sets':k.split('__'), 'size':groups[k], 'figure':groups[k], 'label':k} );
+}
+
+// 1. generate venn graph
+var clr = ColorMultiset(Object.keys(groups)).color;   // colorset optimized for multiset
+//Hur's comment > clr contains color of groups(=condition)
+//If 2 conditions was given, then 2 colors.
+
+var venn_objs = div.datum(grouplist);
+var vennChart = venn.VennDiagram().width(600).height(500).colours(clr);
+var venn_data = vennChart(venn_objs);  // contains radius,x,y, ...
+
+
+// 2. create node neighbor object from edge object
+// (add: x, y, neighbors)
+var nodedict = {}
+for (var i=0; i<nodes.length; i++)
+{
+  nodes[i].neighbors = [];
+  nodedict[nodes[i].name] = nodes[i];
+  nodes[i].x = 0;
+  nodes[i].y = 0;
+}
+
+for (var i=0; i<edges.length; i++)
+{
+  edges[i].nsource = nodedict[edges[i].source];
+  edges[i].ntarget = nodedict[edges[i].target];
+  edges[i].nsource.neighbors.push(edges[i].ntarget);
+//  edges[i].ntarget.neighbors.push(edges[i].nsource);
+// Hur's comment > in some reasons, this line duplicates edges... Need to investigate.
+}
+
+// 3. pass venn param and graph to generate node graph
+var vg = vennGraph(div, clr).width(600).height(500)
+  .setNodes(nodes).setEdges(edges).setCircle(venn_data.circles).prepare();
+
+
+var edge_data = vg.vennEdge(div.datum(edges));    // draw edge first
+var node_data = vg.vennNode(div.datum(nodes));
+//Hur's comment > color is defined at node_data stage.
+//If I want more color modification, I should twick this function. 
+//venngraph.js
+
+// 4. zoom / resize handler
+// zoom refer to: http://bl.ocks.org/TWiStErRob/b1c62730e01fe33baa2dea0d0aa29359
+var zx=0, zy=0;
+function zoomed()
+{
+  var zw_ = $("#venngraph").width(), zh_ = $("#venngraph").height();
+  div.selectAll('g').attr('transform', 'translate(' + (d3.event.transform.x+zw_/2-300) + ',' + (d3.event.transform.y+zh_/2-250)+ ') scale(' + d3.event.transform.k +')')
+  // if large scale, show line & text
+  if (d3.event.transform.k > 5)
+  {
+    var opa = (d3.event.transform.k - 5)/2;
+    if (opa > 1.0) opa = 1.0;
+    div.select('.venn-edges')
+      .attr('display', 'inline')
+      .attr('opacity', opa);
+    div.select('.venn-nodes-text')
+      .attr('display', 'inline')
+      .attr('opacity', opa);
+  }
+  else
+  {
+    div.select('.venn-edges')
+      .attr('display', 'none')
+      .attr('opacity', 0);
+    div.select('.venn-nodes-text')
+      .attr('display', 'none')
+      .attr('opacity', 0);
+  }
+}
+var zoom = d3.zoom()
+  .scaleExtent([1, 8])
+  .on("zoom", zoomed);
+div.call(zoom);
+
+function resize()
+{
+  // object reposition
+  var zw_ = $("#venngraph").width(), zh_ = $("#venngraph").height();
+  var svg = div.select('svg').attr('width',zw_).attr('height',zh_);
+  div.select('svg').selectAll('g').call(zoom.transform, d3.zoomIdentity);
+}
+window.addEventListener("resize", resize);
+resize();
+
+// 5. node drag / tooltip handler (on node/venn)
+// first, hide all edges (displaying all of them so much lag)
+div.select('.venn-edges')
+  .attr('opacity', 0)
+  .attr('display', 'none');
+// set tooltip
+var tooltip = d3.select('body').append("div")
+  .attr("class", "venntooltip small");
+div.on("mousemove", function() {
+  tooltip.style("left", (d3.event.pageX + 10) + "px")
+         .style("top", (d3.event.pageY - 28) + "px");
+});
+
+
+// node hovering event
+function node_mouseover(d,i)
+{
+  // highlight nodes
+  names = d.neighbors.map(x => x.name);
+  div.select('.venn-nodes').selectAll('circle')
+    .each(function (d_neighbor,i) {
+      if (d_neighbor == d) return;
+      if (names.includes(d_neighbor.name))
+      {
+        d3.select(this).attr('class', 'connected');
+      }
+      else
+      {
+        d3.select(this).attr('class', 'notconnected');
+      }
+    });
+  // highlight edges
+  div.select('.venn-edges').selectAll('line')
+    .each(function (d_edge, i) {
+      if (d_edge.nsource.idx == d.idx || d_edge.ntarget.idx == d.idx)
+      {
+        d3.select(this).attr('class', 'connected');
+      } else {
+        d3.select(this).attr('class', 'notconnected');
+      }
+    });
+  tooltip.transition().duration(40).style("opacity", 1);
+  tooltip.html('<b>'+d.name+'</b><br>Rank: ' + gene_rank[d.name] +  '<br>'  +d.neighbors.length+' neighbors');
+}
+
+function node_mouseout(d,i)
+{
+  div.select('.venn-nodes').selectAll('circle').attr('class', null);
+  div.select('.venn-edges').selectAll('line').attr('class', null);
+  tooltip.transition().duration(2000).style("opacity", 0);
+}
+
+function node_color_pick(gene_node)
+{
+	var node_color = '';
+	var circle_list = div.select('.venn-nodes').selectAll('circle')
+
+	circle_list.filter(function (d){
+	if ( d.name == gene_node ){
+		var selection_results = d3.select(this).attr('style');
+		node_color = node_color + selection_results;
+		}
+	});
+
+	var node_color = node_color.replace('fill:','');
+	if (node_color == 'null'){
+		var node_color = 'rgb(31,31,31);';
+	}
+
+	return node_color;
+}
+
+function node_click(d,i)
+{
+	$("#title").text(d.name);
+	var names = d.neighbors.map(x => x.name);
+	//var html = '<br> Rank:' + gene_rank[d.name] + '</b><br>Neighbors are:<br><ul><li>' + names.join('</li><li>') + '</li></ul>';
+	var html = '<br><b><h4>Rank: ' + gene_rank[d.name]+ ' </h2>';
+
+	if (names.length == 0)
+	{
+		var html = html + '</b><br>Neighbors : None';
+	}
+
+	if (names.length == 1) 
+	{	
+	var edge_node_color = node_color_pick(names[i]);
+	var html = html + '</b><br>Neighbors : Rank<br><ul><li>';
+	var html = html + '<font style="color:' + edge_node_color + '">' + names[i] + ': ' + gene_rank[names[i]] + '</font></li></ul>';
+	}
+
+	if (names.length >= 2)
+	{
+		var html = html + '</b><br>Neighbors : Rank<br><ul>';
+		for ( i= 0; i < names.length; i++)
+		{
+			var edge_node_color = node_color_pick(names[i]);
+			var html = html + '<li><font style="color:' + edge_node_color + '">' + names[i]  + '</font>: ' + gene_rank[names[i]] +'</li>';
+		}
+	var html = html + '</ul>';
+	}
+
+	$('#text').html(html);
+	$("#panel").show();
+}
+
+//mouse event handler
+div.select('.venn-nodes').selectAll('circle')
+  .on("mouseover", node_mouseover)
+  .on("mouseout", node_mouseout)
+  .on("click", node_click);
+
+
+div.selectAll(".venn-circle")
+.on("mouseover", function(d, i) {
+  // Display a tooltip with the current size
+  tooltip.transition().duration(40).style("opacity", 1);
+  tooltip.html('<b>' + d.label + '</b><br>' + d.size + " genes");
+})
+.on("mouseout", function(d, i) {
+  tooltip.transition().duration(2000).style("opacity", 0);
+});
+
+// should support drag event?
+function dragstarted() {}
+function dragged() {}
+function dragended() {}
+var drag = d3.drag()
+  .on("start", dragstarted)
+  .on("drag", dragged)
+  .on("end", dragended);
+
+
+function create_ranked_gene_list(){
+	var html = '<table class="bluetop">';
+	for ( i=0; i < 3; i++) {		
+		if (i == 0)	{	
+			var table_head = 10;
+		}
+		else{
+			var table_head = (i + 1) * 10;
+		}
+		
+		var html = html + '<tr><td>Top ' + table_head + '</td>';
+
+		for (j=0; j<10; j++){
+		var rank = String(i) + String(j);
+		var rank = Number(rank);
+		var gene = rank_gene_without_seed_dict[rank];
+		var html = html + '<td>' + gene + '</td>';
+		}
+		var html = html + '</tr>';
+	}
+	var html = html + '</table>';
+	$('#ranked_gene_list').html(html);
+}
+create_ranked_gene_list();
+
+function create_condition_color_dict(grouplist){
+	var condition_color_dict = {};
+	for (i=0; i < grouplist.length; i++){
+
+		condition = grouplist[i];
+		div.select('.venn-nodes').selectAll('circle').filter( function(d){
+			if ( condition = d.group ){
+				 var selection_results = d3.select(this).attr('style');
+				 if (selection_results !== 'null'){
+					 condition_color_dict[condition] = selection_results;
+				 }
+				 if (selection_results == null){
+					 condition_color_dict[condition] = 'rgb(31, 31, 31);';
+				 }
+			}
+		});
+	}
+	return condition_color_dict;
+}
+var condition_color_dict = create_condition_color_dict(grouplist);
+//I think its ok to use as global variable
+
+//Create Legend for circles = condition
+function create_venngraph_legend(grouplist, condition_color_dict){
+	var html = '';
+	for (i=0; i < grouplist.length; i++){
+		var condition = grouplist[i];
+		var condition = condition.label;
+
+		if ( condition.includes('__') == false){
+
+		var condition_color = condition_color_dict[condition];
+		var condition_color = condition_color.replace('fill:','');
+		var html = html + '<i class="fas fa-circle" style="color:' + condition_color + '"></i><font style="color:' + condition_color + '">' + condition + '</font> ';
+		}
+	}
+
+	console.log('repeated? suspect region');
+	var html = html + '<i class="fas fa-circle" style="color:rgb(31,31,31);"></i><font style="color:rgb(31,31,31)">intersection of multiple condition</font> ';
+
+	$('#venngraph_legend').html(html);
+}
+create_venngraph_legend(grouplist, condition_color_dict);
+
+
+
+
+//Click event for node highlight.
+$(document).on('click', '#ranked_gene_list', function(event)
+{
+	var gene_node = $(event.target).text();
+	var circle_list = div.select('.venn-nodes').selectAll('circle')
+	circle_list.filter(function (d){
+		if ( d.name == gene_node ) 	{
+			node_click(d, 0);
+
+			//this : <circle r="2px" cx="289.70425992453056" cy="286.77604126827646" style="fill: rgb(31, 119, 180);"></circle>
+			var node_color = d3.select(this).attr('style')
+
+			if (node_color == 'fill: rgb(140, 0, 0);'){
+
+				var condition_color = condition_color_dict[d.group]
+				var condition_color = condition_color.replace('fill: ','')
+				var condition_color = condition_color.replace(';','')
+				console.log(typeof(condition_color))
+				console.log(condition_color)
+				d3.select(this).style('fill', condition_color)
+				d3.select(this).attr('r', '2px')
+			}
+			if (node_color !== 'fill: rgb(140, 0, 0);'){
+				d3.select(this).style('fill', 'rgb(140, 0, 0)')
+				d3.select(this).attr('r', '5px')
+			}
+		}
+	});
+});
+
+
+//click event for clicking button: Change node color to propagated score
+$(document).on('click', '#change_node_color_rank', function(event)
+{
+	console.log('YOU CLICKED RANK');
+	var circle_list = div.select('.venn-nodes').selectAll('circle')
+	circle_list.filter(function (d){
+	
+		var gene_name = d.name;
+		var rank_color = gene_rank_color[gene_name];
+
+		d3.select(this).style('fill', rank_color);
+		
+	});
+});
+
+
+$(document).on('click', '#change_node_color_sets', function(event)
+{
+	console.log('YOU CLICKED SET');
+
+	var circle_list = div.select('.venn-nodes').selectAll('circle')
+	circle_list.filter(function (d){
+	
+		var gene_name = d.name;
+		var condition = d.group;
+		var condition_color = condition_color_dict[condition];
+		var condition_color = condition_color.replace('fill: ','')
+		var condition_color = condition_color.replace(';','')
+
+		d3.select(this).style('fill', condition_color);
+	});
+});
+
+
+
+
+//Click event : change color of table
+$('td').click(function () {
+	//Check to see if background color is set or if it's set to white.
+	if(this.style.background == "" || this.style.background =="white") {
+		$(this).css('background', 'grey');
+	}
+	else {
+		$(this).css('background', 'white');
+	}
+});
+
+
+
+
+
+// 6. hide loading message
+$('#loading').hide();
+$('#result_download_link').show();
+$('#venngraph').show();
+$('#venngraph_legend').show();
+$('#panel_close').on('click', function() { $('#panel').hide(); });
+
+});
+</script>
+
+{% endblock content %}
