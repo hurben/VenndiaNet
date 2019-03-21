@@ -4,3 +4,5 @@ db.sqlite3
 *.tmp
 *.bak
 static
+MLV/
+MLV/*.py
