@@ -3,23 +3,22 @@ MLV
 
 ### Authors
 
-Benjamin Hur, Dongwon Kang, Sangseon Lee, Sun Kim
+Benjamin Hur, Dongwon Kang, Sangseon Lee, Ji Hwan Moon, Gung Lee and Sun Kim
 
 
 
 ### Structures
 
-#### ```/var/www/htdocs/MLV_v2```
 - MLV : main djangp app
-- work : all works are stored in this folder
 
-#### ```/var/www/html/MLV_static```
+### Key files
+
+- MLV.py : Venndianet main program
+- FL_MLV_Methods_v6.py : Function Library for MLV
+- RWR.R : Network propagation.
+
+### ```/var/www/html/MLV_static```
 - all static files are served here. (bootstrap, jquery, fontawesome, img/js/css ...)
 
-### How to run
 
-python manage.py runserver 0.0.0.0:8082
-
-### If static file needs to be updated ...
-
-python manage.py collectstatic
+### Other sensitive files are not included in the repository
