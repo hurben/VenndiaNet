@@ -8,17 +8,22 @@
 {% endblock widget %}
 
 {% block content %}
-<h3>Settings</h3>
+<h3>Confirmation</h3>
 <strong>Selected Condition :</strong> 
 <div id="SelectedCondition"></div> <br>
 
 
+
+
+
 <div id="insufficient_settings" style="display: none;">Condition for seeds are not selected.<br>Please selected condition for seeds</div>
-<div id="run_mlv" class="upload_form">
+<div id="run_mlv" class="upload_form" style="padding-top:0px">
   <form action="." method="POST" enctype="application/x-www-form-urlencoded">
     {% csrf_token %}
-    <input type="text" name="cutoff" value="None">
-	<br>
+
+	<!-- Currently don't need this... -->
+    <input type="text" name="cutoff" value="None" style="display:none">
+	<!--                              -->
 	<br>
 	<input type="radio" id="Descend" name="sort_method" value="descend" checked \><label for="Descend">Similarity (Descending)</label>
 	<input type="radio" id="Ascend" name="sort_method" value="ascend"><label for="Ascend">Dissimiliarity (Ascending)</label>
@@ -26,6 +31,14 @@
     <input type="submit" class="btn btn-primary" value="Run">
     </div>
   </form>
+
+  <font color="red">NOTE : Please do not push "RUN" button instantly (when you visit this "settings page" at the first time)</font> <br>
+<br>
+  Our server might not catch up the process.. usually 10 secs is fine.<br>
+  If you visit the error page, you can go back to your project using 'previous page' button.<br>
+  We will try to handle this issue soon..
+
+
 </div>
 
 <script>

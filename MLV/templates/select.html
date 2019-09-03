@@ -9,12 +9,19 @@
 
 {% block content %}
 
-<h3>Select condition set.</h3>
-<span id="message">Select conditions that will be used as "Seeds"</span>
+<h3>Select specific segments for 'seeds'</h3>
+<span id="message">
+- "Seeds" for network propagation upon PPI network<br>
+- Seeds can be selected by selecting the condition(s) on the <b>Seed Selection Panel</b> (right panel) <br>
+- Venn-diaNet will calculate the influence of 'seeds' to other 'none seed' genes regarding to the PPI network. <br>
+- Once condition(s) is selected from the Seed selection panel, press the 'confirm' button bellow.
+
+</span>
 
 <div class="row-select">
   <div class="left" id="venn"></div>
   <div class="right" id="combination"></div>
+  <div style="font-size:9pt; font-weight: bold;">Seed Selection Panel</div>
 </div>
 
 <style>
@@ -137,6 +144,11 @@ window.select_combination = function(selection, exclusion)
     }
   });
 }
+
+/*
+var seed_panel = document.getElementById("combination");
+seed_panel.innerHTML += '<div style="font-size:9pt; font-weight: bold;">Seed Selection Panel</div>';
+*/
 window.update_form_data = function()
 {
   var sel = [];
@@ -182,7 +194,7 @@ for (i=0; i<sets.length; i++)
 }
 
 var chart = venn.VennDiagram()
-  .width(600)
+  .width(500)
   .height(500)
   .colours(clr);
 //var div = d3.select("#venn").datum(sets).call(chart);
@@ -207,7 +219,7 @@ div.selectAll("g")
   // Display a tooltip with the current size
   tooltip.transition().duration(40).style("opacity", 1);
   tooltip.text(d.size + " genes are in: " + d.label);
-  console.log(d);
+//  console.log(d);
 
   // highlight the current path
   var selection = d3.select(this).transition("tooltip").duration(400);
@@ -221,6 +233,7 @@ div.selectAll("g")
   tooltip.style("left", (d3.event.pageX + 10) + "px")
          .style("top", (d3.event.pageY - 28) + "px");
 })
+
 
 .on("mouseout", function(d, i) {
   tooltip.transition().duration(2000).style("opacity", 0);

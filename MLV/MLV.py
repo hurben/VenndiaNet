@@ -36,11 +36,21 @@ def generate_venn(path):
 		df_genes = pd.read_csv('work/%s/f/%s' % (s['id'], fp), sep='\t')
 		# change column name of last one
 		new_col_name = df_genes.columns.tolist()
+		print new_col_name
 
 		if ('ID' not in new_col_name):
 			new_col_name[0] = 'ID'
 		if ('GENESYMBOL' not in new_col_name):
 			new_col_name[1] = 'GENESYMBOL'
+
+		#modified: 19.09.02 
+		#updated to avoid bug.
+		#>>>>>>>>>>>>>
+		if ('FoldChange' not in new_col_name):
+			print 'yes'
+			df_genes['dummy'] = 1
+			new_col_name.append('dummy')
+		#<<<<<<<<<<<<<
 
 		new_col_name[-1] = fp
 		df_genes.columns = new_col_name

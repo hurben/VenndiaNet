@@ -9,14 +9,18 @@
 
 {% block content %}
 
-<h3>Upload DEG files.</h3>
-<span>Each file indicates different conditions.</span>
+<h3>Upload files that contains gene list</h3>
+<span>Venn-diaNet recommends to upload DEG lists that contains transcript ID or gene ID <br> Each file indicates independent conditions.</span> <br>
 
 {% if upload_file_count %}
 <span>File is already uploaded ({{ upload_file_count }} conditions)</span>
 {% endif %}
 
-<div class="upload_form">
+<br>
+(+) to add file <br>
+(-) to decrease file <br>
+
+<div class="upload_form" style="padding-top: 10px">
   <div class="upload_control">
     <button type="button" class="btn btn-outline-primary" id="upload_slot_add"><i class="fas fa-plus"></i></button>
     <button type="button" class="btn btn-outline-primary" id="upload_slot_remove"><i class="fas fa-minus"></i></button>
