@@ -13,7 +13,8 @@ Key files
 ### view.py
 > Handles I/O between front-end & back-end
 
-### MLV.py > Venndianet main program 
+### MLV.py 
+> Venndianet main program 
 
 1. creates RWR ready format from initial inputs (.mlv)
 2. creates adjaceny matrix, p0_matrix after seed is defined by user
@@ -22,7 +23,9 @@ Key files
 
 ### FL_MLV_Methods_v6.py
 > Function Library for MLV
-important note
+
+- Currently, Venn-diaNet uses String DB
+- If users want to use other network topology, investigate 'line 65: StringDB_to_dict()'
 
 ### RWR.R
 > Network propagation.
