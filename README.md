@@ -1,12 +1,14 @@
 MLV
 ======
 
-## Authors
+Authors
+--------
 
 ### Benjamin Hur, Dongwon Kang, Sangseon Lee, Ji Hwan Moon, Gung Lee and Sun Kim
 
 
-## Key files
+Key files
+--------
 
 ### view.py
 > Handles I/O between front-end & back-end
