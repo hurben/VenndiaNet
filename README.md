@@ -12,8 +12,8 @@ MLV
 - Handles I/O between front-end & back-end
 
 ### MLV.py
->
-- Venndianet main program 
+
+> Venndianet main program 
 1. creates RWR ready format from initial inputs (.mlv)
 2. creates adjaceny matrix, p0_matrix after seed is defined by user
 3. run RWR.R
