@@ -1,11 +1,11 @@
 Venn-diaNet : venn diagram based network propagation analysis framework for comparing multiple biological experiments
 ======
-https://doi.org/10.1186/s12859-019-3302-7
+
 Authors
 --------
 
 ### Benjamin Hur, Dongwon Kang, Sangseon Lee, Ji Hwan Moon, Gung Lee and Sun Kim
-
+https://doi.org/10.1186/s12859-019-3302-7
 
 Key files
 --------
